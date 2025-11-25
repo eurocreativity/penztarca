@@ -148,13 +148,40 @@ class FinanceApp {
                 .eq('id', session.user.id)
                 .single();
 
-            if (profileError) {
+            if (profileError && profileError.code !== 'PGRST116') {
+                // PGRST116 is "not found" error, which is OK for new users
                 console.error('Profile error:', profileError);
                 window.location.href = 'auth.html';
                 return;
             }
 
-            this.currentUser = { ...session.user, ...profile };
+            // If profile doesn't exist, create it
+            if (!profile || profileError?.code === 'PGRST116') {
+                console.log('Profile not found, creating new profile...');
+                const { data: newProfile, error: createError } = await window.supabaseClient
+                    .from('profiles')
+                    .insert({
+                        id: session.user.id,
+                        name: session.user.user_metadata?.name || session.user.email,
+                        email: session.user.email,
+                        expenses: [],
+                        budget: 0,
+                        categories: this.getDefaultCategories(),
+                        language: 'hu'
+                    })
+                    .select()
+                    .single();
+
+                if (createError) {
+                    console.error('Error creating profile:', createError);
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                this.currentUser = { ...session.user, ...newProfile };
+            } else {
+                this.currentUser = { ...session.user, ...profile };
+            }
             console.log('Current user:', this.currentUser);
 
             // Load user data
