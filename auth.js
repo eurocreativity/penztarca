@@ -139,20 +139,21 @@ class AuthManager {
                 this.showLoginForm();
                 // Clear URL parameters
                 window.history.replaceState({}, document.title, window.location.pathname);
-            } else if (session && window.location.pathname.includes('auth.html')) {
-                // If user is already logged in and on auth page, redirect to index
-                window.location.href = 'index.html';
             }
+            // Removed automatic redirect to index.html to prevent loop
+            // User will be redirected after successful login via handleLogin method
+            // else if (session && window.location.pathname.includes('auth.html')) {
+            //     // If user is already logged in and on auth page, redirect to index
+            //     window.location.href = 'index.html';
+            // }
 
             // Listen for auth state changes
             window.supabaseClient.auth.onAuthStateChange((event, session) => {
                 console.log('Auth state changed:', event, session ? 'Session exists' : 'No session');
 
-                if (event === 'SIGNED_IN' && session) {
-                    if (window.location.pathname.includes('auth.html')) {
-                        window.location.href = 'index.html';
-                    }
-                } else if (event === 'PASSWORD_RECOVERY') {
+                // Removed SIGNED_IN redirect to prevent loop
+                // Redirect happens in handleLogin instead
+                if (event === 'PASSWORD_RECOVERY') {
                     console.log('Showing password recovery form');
                     this.showResetPasswordForm();
                 } else if (event === 'USER_UPDATED') {
