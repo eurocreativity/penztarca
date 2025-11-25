@@ -158,26 +158,38 @@ class FinanceApp {
             // If profile doesn't exist, create it
             if (!profile || profileError?.code === 'PGRST116') {
                 console.log('Profile not found, creating new profile...');
+                console.log('Session user:', session.user);
+                console.log('User metadata:', session.user.user_metadata);
+
+                const profileData = {
+                    id: session.user.id,
+                    name: session.user.user_metadata?.name || session.user.email,
+                    email: session.user.email,
+                    expenses: [],
+                    budget: 0,
+                    categories: this.getDefaultCategories(),
+                    language: 'hu'
+                };
+
+                console.log('Creating profile with data:', profileData);
+
                 const { data: newProfile, error: createError } = await window.supabaseClient
                     .from('profiles')
-                    .insert({
-                        id: session.user.id,
-                        name: session.user.user_metadata?.name || session.user.email,
-                        email: session.user.email,
-                        expenses: [],
-                        budget: 0,
-                        categories: this.getDefaultCategories(),
-                        language: 'hu'
-                    })
+                    .insert(profileData)
                     .select()
                     .single();
 
                 if (createError) {
                     console.error('Error creating profile:', createError);
+                    console.error('Error code:', createError.code);
+                    console.error('Error message:', createError.message);
+                    console.error('Error details:', createError.details);
+                    alert(`Profil létrehozási hiba: ${createError.message}. Ellenőrizd a böngésző konzolt további részletekért.`);
                     window.location.href = 'auth.html';
                     return;
                 }
 
+                console.log('Profile created successfully:', newProfile);
                 this.currentUser = { ...session.user, ...newProfile };
             } else {
                 this.currentUser = { ...session.user, ...profile };
