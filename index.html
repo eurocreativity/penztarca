@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="hu">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Személyes Pénzügyi Nyilvántartó</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>window.supabaseClient = window.supabase;</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script>
@@ -61,29 +61,36 @@
         }
     </script>
 </head>
+
 <body class="bg-gradient-warm dark:bg-gradient-warm-dark min-h-screen transition-all duration-500">
     <!-- Header -->
-    <header class="bg-white/80 dark:bg-stone-900/80 backdrop-blur-lg shadow-lg border-b border-orange-200 dark:border-stone-700">
+    <header
+        class="bg-white/80 dark:bg-stone-900/80 backdrop-blur-lg shadow-lg border-b border-orange-200 dark:border-stone-700">
         <div class="max-w-6xl mx-auto px-4 py-4">
             <div class="flex justify-between items-center">
-                <h1 class="text-2xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
+                <h1
+                    class="text-2xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
                     <i class="fas fa-wallet mr-2 text-primary-500"></i>
                     <span data-lang="appTitle">Pénzügyi Nyilvántartó</span>
                 </h1>
                 <div class="flex items-center space-x-4">
-                    <select id="languageSelector" class="px-4 py-3 bg-orange-100 dark:bg-stone-700 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:text-white transition-all duration-300 shadow-md">
+                    <select id="languageSelector"
+                        class="px-4 py-3 bg-orange-100 dark:bg-stone-700 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:text-white transition-all duration-300 shadow-md">
                         <option value="hu">🇭🇺 Magyar</option>
                         <option value="en">🇺🇸 English</option>
                     </select>
-                    <button id="darkModeToggle" class="p-3 rounded-xl bg-orange-100 dark:bg-stone-700 hover:bg-orange-200 dark:hover:bg-stone-600 transition-all duration-300 shadow-md">
+                    <button id="darkModeToggle"
+                        class="p-3 rounded-xl bg-orange-100 dark:bg-stone-700 hover:bg-orange-200 dark:hover:bg-stone-600 transition-all duration-300 shadow-md">
                         <i class="fas fa-moon dark:hidden"></i>
                         <i class="fas fa-sun hidden dark:inline"></i>
                     </button>
-                    <button id="exportBtn" class="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                    <button id="exportBtn"
+                        class="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                         <i class="fas fa-download mr-2"></i><span data-lang="export">Export</span>
                     </button>
                     <input type="file" id="importBtn" accept=".json" class="hidden">
-                    <button onclick="document.getElementById('importBtn').click()" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                    <button onclick="document.getElementById('importBtn').click()"
+                        class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                         <i class="fas fa-upload mr-2"></i><span data-lang="import">Import</span>
                     </button>
                 </div>
@@ -96,16 +103,22 @@
         <!-- Budget Overview -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
             <div class="lg:col-span-2">
-                <div class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4" data-lang="monthlyBudget">Havi Költségvetés</h2>
+                <div
+                    class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4" data-lang="monthlyBudget">Havi
+                        Költségvetés</h2>
                     <div class="space-y-4">
                         <div class="flex items-center space-x-4">
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 w-32" data-lang="monthlyFrame">Havi keret:</label>
-                            <input type="number" id="monthlyBudget" placeholder="0" class="flex-1 px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
-                            <button id="setBudgetBtn" class="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold relative">
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 w-32"
+                                data-lang="monthlyFrame">Havi keret:</label>
+                            <input type="number" id="monthlyBudget" placeholder="0"
+                                class="flex-1 px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
+                            <button id="setBudgetBtn"
+                                class="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold relative">
                                 <div class="flex items-center justify-center">
                                     <span data-lang="setBudget">Beállít</span>
-                                    <div class="hidden absolute inset-0 bg-primary-600 rounded-xl flex items-center justify-center">
+                                    <div
+                                        class="hidden absolute inset-0 bg-primary-600 rounded-xl flex items-center justify-center">
                                         <i class="fas fa-spinner fa-spin"></i>
                                     </div>
                                 </div>
@@ -114,13 +127,18 @@
                         <div class="space-y-2">
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600 dark:text-gray-400" data-lang="spending">Költés</span>
-                                <span id="budgetProgress" class="font-medium text-gray-900 dark:text-white">0 Ft / 0 Ft</span>
+                                <span id="budgetProgress" class="font-medium text-gray-900 dark:text-white">0 Ft / 0
+                                    Ft</span>
                             </div>
                             <div class="w-full bg-orange-200/50 dark:bg-stone-700 rounded-full h-4 shadow-inner">
-                                <div id="budgetBar" class="bg-gradient-to-r from-primary-500 to-primary-600 h-4 rounded-full transition-all duration-500 shadow-sm" style="width: 0%"></div>
+                                <div id="budgetBar"
+                                    class="bg-gradient-to-r from-primary-500 to-primary-600 h-4 rounded-full transition-all duration-500 shadow-sm"
+                                    style="width: 0%"></div>
                             </div>
                             <div class="flex justify-between text-sm">
-                                <span class="text-green-600 dark:text-green-400"><span data-lang="remaining">Maradék:</span> <span id="remainingBudget">0 Ft</span></span>
+                                <span class="text-green-600 dark:text-green-400"><span
+                                        data-lang="remaining">Maradék:</span> <span id="remainingBudget">0
+                                        Ft</span></span>
                                 <span id="budgetPercentage" class="text-gray-600 dark:text-gray-400">0%</span>
                             </div>
                         </div>
@@ -130,24 +148,30 @@
 
             <!-- Quick Stats -->
             <div class="space-y-6">
-                <div class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-xl transition-all duration-300">
+                <div
+                    class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-xl transition-all duration-300">
                     <div class="flex items-center">
-                        <div class="p-4 bg-gradient-to-br from-warm-100 to-warm-200 dark:from-warm-900/30 dark:to-warm-800/30 rounded-xl">
+                        <div
+                            class="p-4 bg-gradient-to-br from-warm-100 to-warm-200 dark:from-warm-900/30 dark:to-warm-800/30 rounded-xl">
                             <i class="fas fa-credit-card text-warm-600 dark:text-warm-400"></i>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm text-gray-600 dark:text-gray-400" data-lang="todayExpenses">Mai kiadások</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400" data-lang="todayExpenses">Mai kiadások
+                            </p>
                             <p id="todayExpenses" class="text-xl font-semibold text-gray-900 dark:text-white">0 Ft</p>
                         </div>
                     </div>
                 </div>
-                <div class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-xl transition-all duration-300">
+                <div
+                    class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-xl transition-all duration-300">
                     <div class="flex items-center">
-                        <div class="p-4 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 rounded-xl">
+                        <div
+                            class="p-4 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 rounded-xl">
                             <i class="fas fa-chart-line text-primary-600 dark:text-primary-400"></i>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm text-gray-600 dark:text-gray-400" data-lang="monthlyAmount">Havi összeg</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400" data-lang="monthlyAmount">Havi összeg
+                            </p>
                             <p id="monthlyExpenses" class="text-xl font-semibold text-gray-900 dark:text-white">0 Ft</p>
                         </div>
                     </div>
@@ -158,16 +182,22 @@
         <!-- Expense Form and List -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
             <!-- Add Expense Form -->
-            <div class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4" data-lang="newExpense">Új Kiadás</h2>
+            <div
+                class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4" data-lang="newExpense">Új Kiadás
+                </h2>
                 <form id="expenseForm" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-lang="amount">Összeg (Ft)</label>
-                        <input type="number" id="expenseAmount" required class="w-full px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                            data-lang="amount">Összeg (Ft)</label>
+                        <input type="number" id="expenseAmount" required
+                            class="w-full px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-lang="category">Kategória</label>
-                        <select id="expenseCategory" required class="w-full px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                            data-lang="category">Kategória</label>
+                        <select id="expenseCategory" required
+                            class="w-full px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
                             <option value="" data-lang="selectCategory">Válassz kategóriát</option>
                             <option value="food">Élelmiszer</option>
                             <option value="transport">Közlekedés</option>
@@ -177,18 +207,24 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-lang="description">Leírás</label>
-                        <input type="text" id="expenseDescription" required class="w-full px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                            data-lang="description">Leírás</label>
+                        <input type="text" id="expenseDescription" required
+                            class="w-full px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-lang="date">Dátum</label>
-                        <input type="date" id="expenseDate" required class="w-full px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                            data-lang="date">Dátum</label>
+                        <input type="date" id="expenseDate" required
+                            class="w-full px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
                     </div>
-                    <button type="submit" class="w-full px-6 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold relative">
+                    <button type="submit"
+                        class="w-full px-6 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold relative">
                         <div class="flex items-center justify-center">
                             <i class="fas fa-plus mr-2"></i>
                             <span data-lang="addExpense">Kiadás Hozzáadása</span>
-                            <div class="hidden absolute inset-0 bg-primary-600 rounded-xl flex items-center justify-center">
+                            <div
+                                class="hidden absolute inset-0 bg-primary-600 rounded-xl flex items-center justify-center">
                                 <i class="fas fa-spinner fa-spin"></i>
                             </div>
                         </div>
@@ -197,9 +233,11 @@
             </div>
 
             <!-- Recent Expenses -->
-            <div class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
+            <div
+                class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white" data-lang="recentExpenses">Legutóbbi Kiadások</h2>
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white" data-lang="recentExpenses">Legutóbbi
+                        Kiadások</h2>
                     <button id="showAllExpenses" class="text-primary-500 hover:text-primary-600 text-sm font-medium">
                         <span data-lang="viewAll">Összes megtekintése</span>
                     </button>
@@ -213,16 +251,20 @@
         <!-- Charts -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Category Chart -->
-            <div class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4" data-lang="categoryChart">Kiadások Kategóriánként</h2>
+            <div
+                class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4" data-lang="categoryChart">Kiadások
+                    Kategóriánként</h2>
                 <div class="relative">
                     <canvas id="categoryChart" width="400" height="400"></canvas>
                 </div>
             </div>
 
             <!-- Monthly Trend Chart -->
-            <div class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4" data-lang="monthlyTrend">Havi Trend</h2>
+            <div
+                class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4" data-lang="monthlyTrend">Havi Trend
+                </h2>
                 <div class="relative">
                     <canvas id="trendChart" width="400" height="400"></canvas>
                 </div>
@@ -233,16 +275,19 @@
     <!-- All Expenses Modal -->
     <div id="expensesModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white/95 dark:bg-stone-800/95 backdrop-blur-lg rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-orange-200/50 dark:border-stone-600/50">
+            <div
+                class="bg-white/95 dark:bg-stone-800/95 backdrop-blur-lg rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-orange-200/50 dark:border-stone-600/50">
                 <div class="p-8 border-b border-orange-200/50 dark:border-stone-600/50">
                     <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white" data-lang="allExpenses">Összes Kiadás</h2>
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white" data-lang="allExpenses">Összes
+                            Kiadás</h2>
                         <button id="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                             <i class="fas fa-times text-xl"></i>
                         </button>
                     </div>
                     <div class="mt-4 flex space-x-4">
-                        <select id="filterCategory" class="px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl dark:bg-stone-700/50 dark:text-white focus:ring-2 focus:ring-primary-500 transition-all duration-300">
+                        <select id="filterCategory"
+                            class="px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl dark:bg-stone-700/50 dark:text-white focus:ring-2 focus:ring-primary-500 transition-all duration-300">
                             <option value="" data-lang="allCategories">Minden kategória</option>
                             <option value="food">Élelmiszer</option>
                             <option value="transport">Közlekedés</option>
@@ -250,7 +295,8 @@
                             <option value="bills">Számlák</option>
                             <option value="other">Egyéb</option>
                         </select>
-                        <input type="month" id="filterMonth" class="px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl dark:bg-stone-700/50 dark:text-white focus:ring-2 focus:ring-primary-500 transition-all duration-300">
+                        <input type="month" id="filterMonth"
+                            class="px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl dark:bg-stone-700/50 dark:text-white focus:ring-2 focus:ring-primary-500 transition-all duration-300">
                     </div>
                 </div>
                 <div class="p-8 overflow-y-auto max-h-[60vh]">
@@ -292,4 +338,5 @@
         });
     </script>
 </body>
+
 </html>
