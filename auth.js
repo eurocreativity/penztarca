@@ -472,44 +472,6 @@ class AuthManager {
         }
     };
 
-    checkAuthStatus = async () => {
-        try {
-            if (!window.supabaseClient) {
-                console.error('Supabase client not initialized');
-                return;
-            }
-
-            // Subscribe to auth state changes
-            window.supabaseClient.auth.onAuthStateChange((event, session) => {
-                console.log('Auth state changed:', event, session ? 'Session exists' : 'No session');
-                if (event === 'PASSWORD_RECOVERY') {
-                    console.log('Showing password recovery form');
-                    this.showResetPasswordForm();
-                } else if (session) {
-                    if (window.location.pathname.includes('auth.html')) {
-                        console.log('Redirecting to index.html');
-                        window.location.href = 'index.html';
-                    }
-                }
-            });
-
-            // Check initial session
-            const { data: { session }, error } = await window.supabaseClient.auth.getSession();
-
-            if (error) {
-                console.error('Error getting session:', error);
-                return;
-            }
-
-            if (session && !window.location.hash.includes('type=recovery')) {
-                if (window.location.pathname.includes('auth.html')) {
-                    window.location.href = 'index.html';
-                }
-            }
-        } catch (error) {
-            console.error('Error in checkAuthStatus:', error);
-        }
-    }
 
     static async logout() {
         try {
