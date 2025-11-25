@@ -1,0 +1,24 @@
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  conditions = {Role = ["admin"]}
+
+# Redirect for auth pages
+[[redirects]]
+  from = "/auth"
+  to = "/auth.html"
+  status = 200
+
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/landing.html"
+  status = 200
+
+[build]
+  publish = "."
+  command = "echo 'No build step required'"
+
+[build.environment]
+  NODE_VERSION = "18"

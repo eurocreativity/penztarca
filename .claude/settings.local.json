@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(python:*)",
+      "Bash(node:*)",
+      "Bash(findstr:*)",
+      "Bash(npm test)",
+      "Bash(dir)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(claude mcp add:*)",
+      "Bash(claude mcp)",
+      "Bash(claude mcp:*)",
+      "Bash(uvx:*)",
+      "Bash(uv:*)",
+      "Bash(pip --version)",
+      "Bash(pip install:*)",
+      "Bash(claude doctor)",
+      "Read(//c/Users/Mark/**)",
+      "WebSearch",
+      "Bash(npx:*)",
+      "WebFetch(domain:supabase.com)",
+      "Bash(del:*)",
+      "Bash(rm:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_select_option"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

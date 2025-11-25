@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PénzTár - Személyes Pénzügyi Nyilvántartó</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fef7ed',
+                            100: '#fdedd3',
+                            200: '#fbd9a5',
+                            300: '#f8bc6d',
+                            400: '#f59e0b',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            800: '#92400e',
+                            900: '#78350f'
+                        },
+                        warm: {
+                            50: '#fef2f2',
+                            100: '#fee2e2',
+                            200: '#fecaca',
+                            300: '#fca5a5',
+                            400: '#f87171',
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                            800: '#991b1b',
+                            900: '#7f1d1d'
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.8s ease-in-out',
+                        'slide-up': 'slideUp 0.6s ease-out',
+                        'float': 'float 6s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(50px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-20px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .bg-gradient-warm {
+            background: linear-gradient(135deg, #fef7ed 0%, #fdedd3 25%, #fbd9a5 50%, #f8bc6d 75%, #f59e0b 100%);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #f59e0b, #d97706, #b45309);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body class="bg-gradient-warm min-h-screen">
+    <!-- Header -->
+    <header class="bg-white/90 backdrop-blur-lg shadow-lg border-b border-orange-200">
+        <div class="max-w-6xl mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-wallet text-white text-lg"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-gradient">PénzTár</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="loginBtn" class="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Belépés
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="py-20 px-4 text-center">
+        <div class="max-w-4xl mx-auto animate-fade-in">
+            <div class="animate-float mb-8">
+                <i class="fas fa-chart-line text-6xl text-primary-600 mb-6"></i>
+            </div>
+            <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+                Tartsd <span class="text-gradient">kézben</span> a pénzügyeid
+            </h1>
+            <p class="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
+                Egyszerű, modern és biztonságos pénzügyi nyilvántartó rendszer személyes használatra.
+                Kövesd kiadásaidat, tervezz költségvetést és érj el pénzügyi céljaidat.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <button id="getStartedBtn" class="px-8 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold text-lg">
+                    <i class="fas fa-rocket mr-2"></i>Kezdés
+                </button>
+                <button id="learnMoreBtn" class="px-8 py-4 border-2 border-primary-500 text-primary-600 rounded-xl hover:bg-primary-50 transition-all duration-300 font-semibold text-lg">
+                    <i class="fas fa-info-circle mr-2"></i>Tudj meg többet
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-20 px-4 bg-white/80 backdrop-blur-sm">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16 animate-slide-up">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Miért válaszd a PénzTár-t?</h2>
+                <p class="text-xl text-gray-600">Minden szükséges eszköz egy helyen a pénzügyi kontrolljához</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 animate-slide-up">
+                    <div class="w-16 h-16 bg-gradient-to-br from-primary-100 to-primary-200 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-shield-alt text-primary-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Biztonságos</h3>
+                    <p class="text-gray-600">Adataid biztonságban vannak. Minden felhasználó csak a saját adatait látja és kezeli.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 animate-slide-up" style="animation-delay: 0.1s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-tags text-emerald-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Testreszabható</h3>
+                    <p class="text-gray-600">Hozz létre saját kategóriákat, szerkeszd és töröld őket igényeid szerint.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 animate-slide-up" style="animation-delay: 0.2s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-chart-pie text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Vizuális</h3>
+                    <p class="text-gray-600">Szép diagramok és grafikonok segítik a pénzügyi helyzeted megértését.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 animate-slide-up" style="animation-delay: 0.3s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-mobile-alt text-purple-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Mobilbarát</h3>
+                    <p class="text-gray-600">Tökéletesen működik minden eszközön - telefonon, tableten és számítógépen.</p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 animate-slide-up" style="animation-delay: 0.4s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-warm-100 to-warm-200 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-moon text-warm-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Sötét mód</h3>
+                    <p class="text-gray-600">Válassz világos vagy sötét témát a kényelmes használat érdekében.</p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 animate-slide-up" style="animation-delay: 0.5s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-download text-yellow-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Export/Import</h3>
+                    <p class="text-gray-600">Mentsd el és töltsd be adataidat JSON formátumban egyszerűen.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 px-4 bg-gradient-to-r from-primary-500 to-primary-600">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-4xl font-bold text-white mb-6">Készen állsz a kezdésre?</h2>
+            <p class="text-xl text-primary-100 mb-8">Csatlakozz és vedd kézbe pénzügyeid irányítását még ma!</p>
+            <button id="signupBtn" class="px-8 py-4 bg-white text-primary-600 rounded-xl hover:bg-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold text-lg">
+                <i class="fas fa-user-plus mr-2"></i>Regisztráció
+            </button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12 px-4">
+        <div class="max-w-6xl mx-auto text-center">
+            <div class="flex items-center justify-center space-x-3 mb-6">
+                <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-wallet text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold">PénzTár</h3>
+            </div>
+            <p class="text-gray-400 mb-6">Személyes pénzügyi nyilvántartó - egyszerűen és biztonságosan</p>
+            <div class="border-t border-gray-700 pt-6">
+                <p class="text-gray-500">© 2025 PénzTár. Minden jog fenntartva.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Navigation event handlers
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            window.location.href = 'auth.html';
+        });
+
+        document.getElementById('getStartedBtn').addEventListener('click', () => {
+            window.location.href = 'auth.html';
+        });
+
+        document.getElementById('signupBtn').addEventListener('click', () => {
+            window.location.href = 'auth.html';
+        });
+
+        document.getElementById('learnMoreBtn').addEventListener('click', () => {
+            document.querySelector('#features').scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+
+        // Add scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-slide-up');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all feature cards
+        document.querySelectorAll('.bg-white.rounded-2xl').forEach(card => {
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>
