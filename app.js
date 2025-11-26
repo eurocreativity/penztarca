@@ -509,6 +509,19 @@ class FinanceApp {
                                     <option value="fas fa-ellipsis-h">📝 Egyéb</option>
                                 </select>
                             </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Típus</label>
+                                <div class="flex space-x-4">
+                                    <label class="flex items-center">
+                                        <input type="radio" name="categoryType" value="expense" class="mr-2" checked>
+                                        <span>Kiadás</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="radio" name="categoryType" value="income" class="mr-2">
+                                        <span>Bevétel</span>
+                                    </label>
+                                </div>
+                            </div>
                             <div class="flex space-x-2">
                                 <button id="saveCategoryBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
                                     <span data-lang="saveCategory">${this.getText('saveCategory')}</span>
@@ -592,11 +605,21 @@ class FinanceApp {
             document.getElementById('categoryNameInput').value = category.name;
             document.getElementById('categoryColorInput').value = category.color;
             document.getElementById('categoryIconInput').value = category.icon;
+            // Set type radio buttons
+            const typeRadios = document.getElementsByName('categoryType');
+            typeRadios.forEach(radio => {
+                radio.checked = (radio.value === (category.type || 'expense'));
+            });
             form.setAttribute('data-editing', category.id);
         } else {
             document.getElementById('categoryNameInput').value = '';
             document.getElementById('categoryColorInput').value = '#f59e0b';
             document.getElementById('categoryIconInput').value = 'fas fa-ellipsis-h';
+            // Default to expense type
+            const typeRadios = document.getElementsByName('categoryType');
+            typeRadios.forEach(radio => {
+                radio.checked = (radio.value === 'expense');
+            });
             form.removeAttribute('data-editing');
         }
     }
@@ -611,6 +634,7 @@ class FinanceApp {
         const name = document.getElementById('categoryNameInput').value.trim();
         const color = document.getElementById('categoryColorInput').value;
         const icon = document.getElementById('categoryIconInput').value;
+        const type = document.querySelector('input[name="categoryType"]:checked').value;
 
         if (!name) {
             alert('Kérlek add meg a kategória nevét!');
@@ -622,7 +646,8 @@ class FinanceApp {
                 user_id: this.currentUser.id,
                 name,
                 color,
-                icon
+                icon,
+                type
             };
 
             if (editingId) {
