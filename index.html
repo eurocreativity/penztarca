@@ -188,6 +188,19 @@
                 </h2>
                 <form id="expenseForm" class="space-y-4">
                     <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Típus</label>
+                        <div class="flex space-x-4 mb-4">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="transactionType" value="expense" class="mr-2 text-primary-500 focus:ring-primary-500" checked>
+                                <span class="text-gray-700 dark:text-gray-300">Kiadás</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="transactionType" value="income" class="mr-2 text-green-500 focus:ring-green-500">
+                                <span class="text-gray-700 dark:text-gray-300">Bevétel</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                             data-lang="amount">Összeg (Ft)</label>
                         <input type="number" id="expenseAmount" required
