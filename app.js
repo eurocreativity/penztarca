@@ -158,16 +158,11 @@ class FinanceApp {
             // If profile doesn't exist, create it
             if (!profile || profileError?.code === 'PGRST116') {
                 console.log('Profile not found, creating new profile...');
-                console.log('Session user:', session.user);
-                console.log('User metadata:', session.user.user_metadata);
 
                 const profileData = {
                     id: session.user.id,
                     name: session.user.user_metadata?.name || session.user.email,
-                    email: session.user.email,
-                    expenses: [],
                     budget: 0,
-                    categories: this.getDefaultCategories(),
                     language: 'hu'
                 };
 
@@ -181,16 +176,16 @@ class FinanceApp {
 
                 if (createError) {
                     console.error('Error creating profile:', createError);
-                    console.error('Error code:', createError.code);
-                    console.error('Error message:', createError.message);
-                    console.error('Error details:', createError.details);
-                    alert(`Profil létrehozási hiba: ${createError.message}. Ellenőrizd a böngésző konzolt további részletekért.`);
+                    alert(`Profil létrehozási hiba: ${createError.message}`);
                     window.location.href = 'auth.html';
                     return;
                 }
 
                 console.log('Profile created successfully:', newProfile);
                 this.currentUser = { ...session.user, ...newProfile };
+
+                // Initialize default categories for new user
+                await this.ensureCategories();
             } else {
                 this.currentUser = { ...session.user, ...profile };
             }
@@ -313,63 +308,85 @@ class FinanceApp {
         if (this.currentUser) {
             try {
                 console.log('Loading user data from Supabase...');
-                const { data, error } = await window.supabaseClient
+
+                // 1. Load Profile (Budget, Language)
+                const { data: profile, error: profileError } = await window.supabaseClient
                     .from('profiles')
-                    .select('*')
+                    .select('budget, language')
                     .eq('id', this.currentUser.id)
                     .single();
 
-                if (error) {
-                    console.error('Error loading user data:', error);
-                    throw error;
-                }
+                if (profileError) throw profileError;
 
-                if (data) {
-                    console.log('User data loaded:', data);
-                    this.expenses = data.expenses || [];
-                    this.budget = data.budget || 0;
-                    this.categories = data.categories || this.getDefaultCategories();
-                    this.currentLanguage = data.language || 'hu';
-                }
+                this.budget = profile.budget || 0;
+                this.currentLanguage = profile.language || 'hu';
+
+                // 2. Load Categories
+                this.categories = await this.ensureCategories();
+
+                // 3. Load Expenses
+                const { data: expenses, error: expensesError } = await window.supabaseClient
+                    .from('expenses')
+                    .select('*')
+                    .eq('user_id', this.currentUser.id)
+                    .order('date', { ascending: false });
+
+                if (expensesError) throw expensesError;
+
+                // Map expenses to match app structure
+                this.expenses = expenses.map(e => ({
+                    id: e.id,
+                    amount: e.amount,
+                    category: e.category_id,
+                    description: e.description,
+                    date: e.date,
+                    timestamp: e.created_at
+                }));
+
+                console.log('User data loaded successfully');
             } catch (error) {
                 console.error('Failed to load user data:', error);
                 // Set default values if loading fails
                 this.expenses = [];
                 this.budget = 0;
-                this.categories = this.getDefaultCategories();
+                this.categories = this.getDefaultCategories(); // Fallback
                 this.currentLanguage = 'hu';
             }
         }
     }
 
-    async saveUserData() {
-        if (this.currentUser) {
-            try {
-                console.log('Saving user data to Supabase...');
-                const { data, error } = await window.supabaseClient
-                    .from('profiles')
-                    .update({
-                        expenses: this.expenses,
-                        budget: this.budget,
-                        categories: this.categories,
-                        language: this.currentLanguage,
-                        last_updated: new Date().toISOString()
-                    })
-                    .eq('id', this.currentUser.id);
+    async ensureCategories() {
+        try {
+            let { data: categories, error } = await window.supabaseClient
+                .from('categories')
+                .select('*')
+                .eq('user_id', this.currentUser.id)
+                .order('id', { ascending: true });
 
-                if (error) {
-                    console.error('Error saving data:', error);
-                    throw error;
-                }
+            if (error) throw error;
 
-                console.log('Data saved successfully');
-            } catch (error) {
-                console.error('Failed to save user data:', error);
-                alert(this.getText('saveError'));
-                throw error;
+            if (!categories || categories.length === 0) {
+                console.log('No categories found, creating defaults...');
+                const defaults = this.getDefaultCategories().map(c => ({
+                    user_id: this.currentUser.id,
+                    name: c.name,
+                    color: c.color,
+                    icon: c.icon
+                }));
+
+                const { data: newCategories, error: insertError } = await window.supabaseClient
+                    .from('categories')
+                    .insert(defaults)
+                    .select();
+
+                if (insertError) throw insertError;
+                categories = newCategories;
             }
-        } else {
-            console.warn('No user logged in, cannot save data');
+
+            return categories;
+        } catch (error) {
+            console.error('Error ensuring categories:', error);
+            return [];
         }
     }
 
@@ -402,9 +419,9 @@ class FinanceApp {
         });
 
         // Language selector
-        document.getElementById('languageSelector').addEventListener('change', (e) => {
+        document.getElementById('languageSelector').addEventListener('change', async (e) => {
             this.currentLanguage = e.target.value;
-            this.saveUserData();
+            await this.saveLanguage();
             this.updateLanguage();
         });
 
@@ -580,7 +597,7 @@ class FinanceApp {
         document.getElementById('categoryEditForm').classList.add('hidden');
     }
 
-    saveCategory() {
+    async saveCategory() {
         const form = document.getElementById('categoryEditForm');
         const editingId = form.getAttribute('data-editing');
         const name = document.getElementById('categoryNameInput').value.trim();
@@ -592,27 +609,48 @@ class FinanceApp {
             return;
         }
 
-        if (editingId) {
-            // Edit existing category
-            const categoryIndex = this.categories.findIndex(c => c.id === editingId);
-            if (categoryIndex !== -1) {
-                this.categories[categoryIndex] = { ...this.categories[categoryIndex], name, color, icon };
-            }
-        } else {
-            // Add new category
-            const newCategory = {
-                id: 'custom_' + Date.now(),
+        try {
+            const categoryData = {
+                user_id: this.currentUser.id,
                 name,
                 color,
                 icon
             };
-            this.categories.push(newCategory);
-        }
 
-        this.saveUserData();
-        this.hideCategoryEditForm();
-        this.renderCategoriesList();
-        this.updateCategorySelectors();
+            if (editingId) {
+                // Edit existing category
+                const { error } = await window.supabaseClient
+                    .from('categories')
+                    .update(categoryData)
+                    .eq('id', editingId);
+
+                if (error) throw error;
+
+                // Update local state
+                const index = this.categories.findIndex(c => c.id == editingId);
+                if (index !== -1) {
+                    this.categories[index] = { ...this.categories[index], ...categoryData };
+                }
+            } else {
+                // Add new category
+                const { data, error } = await window.supabaseClient
+                    .from('categories')
+                    .insert(categoryData)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                this.categories.push(data);
+            }
+
+            this.hideCategoryEditForm();
+            this.renderCategoriesList();
+            this.updateCategorySelectors();
+        } catch (error) {
+            console.error('Error saving category:', error);
+            alert(this.getText('saveError'));
+        }
     }
 
     editCategory(categoryId) {
@@ -622,9 +660,9 @@ class FinanceApp {
         }
     }
 
-    deleteCategory(categoryId) {
+    async deleteCategory(categoryId) {
         // Check if category is used in expenses
-        const isUsed = this.expenses.some(expense => expense.category === categoryId);
+        const isUsed = this.expenses.some(expense => expense.category == categoryId);
 
         if (isUsed) {
             alert('Ezt a kategóriát nem lehet törölni, mert használatban van!');
@@ -632,10 +670,34 @@ class FinanceApp {
         }
 
         if (confirm('Biztosan törölni szeretnéd ezt a kategóriát?')) {
-            this.categories = this.categories.filter(c => c.id !== categoryId);
-            this.saveUserData();
-            this.renderCategoriesList();
-            this.updateCategorySelectors();
+            try {
+                const { error } = await window.supabaseClient
+                    .from('categories')
+                    .delete()
+                    .eq('id', categoryId);
+
+                if (error) throw error;
+
+                this.categories = this.categories.filter(c => c.id != categoryId);
+                this.renderCategoriesList();
+                this.updateCategorySelectors();
+            } catch (error) {
+                console.error('Error deleting category:', error);
+                alert(this.getText('saveError'));
+            }
+        }
+    }
+
+    async saveLanguage() {
+        try {
+            const { error } = await window.supabaseClient
+                .from('profiles')
+                .update({ language: this.currentLanguage })
+                .eq('id', this.currentUser.id);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error saving language:', error);
         }
     }
 
@@ -678,10 +740,24 @@ class FinanceApp {
             return;
         }
 
-        this.budget = amount;
-        await this.saveUserData();
-        this.updateBudgetDisplay();
-        budgetInput.value = '';
+        try {
+            const { error } = await window.supabaseClient
+                .from('profiles')
+                .update({ budget: amount })
+                .eq('id', this.currentUser.id);
+
+            if (error) throw error;
+
+            this.budget = amount;
+            this.updateBudgetDisplay();
+            budgetInput.value = '';
+        } catch (error) {
+            console.error('Error saving budget:', error);
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
+            console.error('Error details:', error.details);
+            alert(`Hiba mentés közben: ${error.message || error.error_description || 'Ismeretlen hiba'}`);
+        }
     }
 
     async addOrUpdateExpense() {
@@ -691,7 +767,7 @@ class FinanceApp {
         const dateInput = document.getElementById('expenseDate');
 
         const amount = parseFloat(amountInput.value);
-        const category = categorySelect.value;
+        const categoryId = parseInt(categorySelect.value); // Ensure numeric ID
         const description = descriptionInput.value.trim();
         const date = dateInput.value;
 
@@ -701,7 +777,7 @@ class FinanceApp {
             return;
         }
 
-        if (!category) {
+        if (!categoryId) {
             alert(this.getText('selectCategoryError'));
             return;
         }
@@ -718,30 +794,56 @@ class FinanceApp {
 
         try {
             const expenseData = {
-                amount,
-                category,
-                description,
-                date,
-                timestamp: new Date().toISOString()
+                user_id: this.currentUser.id,
+                amount: amount,
+                category_id: categoryId,
+                description: description,
+                date: date
             };
 
             if (this.currentEditId) {
                 // Update existing expense
+                const { error } = await window.supabaseClient
+                    .from('expenses')
+                    .update(expenseData)
+                    .eq('id', this.currentEditId);
+
+                if (error) throw error;
+
+                // Update local state
                 const index = this.expenses.findIndex(exp => exp.id === this.currentEditId);
                 if (index !== -1) {
-                    this.expenses[index] = { ...this.expenses[index], ...expenseData };
+                    this.expenses[index] = {
+                        ...this.expenses[index],
+                        amount,
+                        category: categoryId,
+                        description,
+                        date
+                    };
                 }
                 this.currentEditId = null;
             } else {
                 // Add new expense
-                expenseData.id = Date.now();
-                this.expenses.push(expenseData);
+                const { data, error } = await window.supabaseClient
+                    .from('expenses')
+                    .insert(expenseData)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                // Add to local list
+                this.expenses.push({
+                    id: data.id,
+                    amount: data.amount,
+                    category: data.category_id,
+                    description: data.description,
+                    date: data.date,
+                    timestamp: data.created_at
+                });
             }
 
-            // Save to Supabase
-            await this.saveUserData();
-
-            // Clear form only after successful save
+            // Clear form
             amountInput.value = '';
             categorySelect.value = '';
             descriptionInput.value = '';
@@ -1071,12 +1173,22 @@ class FinanceApp {
         // Scroll to form
         document.getElementById('expenseForm').scrollIntoView({ behavior: 'smooth' });
     }
-
-    deleteExpense(expenseId) {
+    async deleteExpense(expenseId) {
         if (confirm(this.getText('deleteConfirm'))) {
-            this.expenses = this.expenses.filter(exp => exp.id !== expenseId);
-            this.saveUserData();
-            this.updateUI();
+            try {
+                const { error } = await window.supabaseClient
+                    .from('expenses')
+                    .delete()
+                    .eq('id', expenseId);
+
+                if (error) throw error;
+
+                this.expenses = this.expenses.filter(e => e.id !== expenseId);
+                this.updateUI();
+            } catch (error) {
+                console.error('Error deleting expense:', error);
+                alert(this.getText('saveError'));
+            }
         }
     }
 
