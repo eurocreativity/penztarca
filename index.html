@@ -191,11 +191,13 @@
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Típus</label>
                         <div class="flex space-x-4 mb-4">
                             <label class="flex items-center cursor-pointer">
-                                <input type="radio" name="transactionType" value="expense" class="mr-2 text-primary-500 focus:ring-primary-500" checked>
+                                <input type="radio" name="transactionType" value="expense"
+                                    class="mr-2 text-primary-500 focus:ring-primary-500" checked>
                                 <span class="text-gray-700 dark:text-gray-300">Kiadás</span>
                             </label>
                             <label class="flex items-center cursor-pointer">
-                                <input type="radio" name="transactionType" value="income" class="mr-2 text-green-500 focus:ring-green-500">
+                                <input type="radio" name="transactionType" value="income"
+                                    class="mr-2 text-green-500 focus:ring-green-500">
                                 <span class="text-gray-700 dark:text-gray-300">Bevétel</span>
                             </label>
                         </div>
@@ -316,40 +318,27 @@
                     <div id="allExpensesList" class="space-y-3">
                         <!-- All expenses will be populated here -->
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="supabase-client.js"></script>
-    <script src="auth.js"></script>
-    <script src="app.js"></script>
-    <script>
-        // Initialize the application after all scripts are loaded
-        document.addEventListener('DOMContentLoaded', async () => {
-            const initApp = async () => {
-                if (!window.app) {
                     window.app = new FinanceApp();
-                    // We don't await init() here to avoid blocking, 
+                    // We don't await init() here to avoid blocking,
                     // but FinanceApp constructor calls init() anyway.
                     // However, init() is async, so we should be careful.
                     // Actually, the constructor calls init(), so we don't need to call it again here
-                    // or we should remove the call from constructor. 
+                    // or we should remove the call from constructor.
                     // Let's check the constructor.
                     // The constructor calls this.init().
                     // So we just need to instantiate it.
-                }
-            };
+                    }
+                    };
 
-            if (window.supabaseClient) {
-                initApp();
-            } else {
-                window.addEventListener('supabaseReady', () => {
+                    if (window.supabaseClient) {
                     initApp();
-                });
-            }
-        });
-    </script>
+                    } else {
+                    window.addEventListener('supabaseReady', () => {
+                    initApp();
+                    });
+                    }
+                    });
+                    </script>
 </body>
 
 </html>

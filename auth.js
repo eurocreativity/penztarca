@@ -556,18 +556,20 @@ class AuthManager {
     }
 }
 
-// Initialize auth manager
-// Initialize auth manager
+// Initialize auth manager only on auth.html page
 document.addEventListener('DOMContentLoaded', () => {
-    const initAuth = () => {
-        new AuthManager();
-    };
+    // Only initialize AuthManager if we're on the auth.html page
+    if (window.location.pathname.includes('auth.html')) {
+        const initAuth = () => {
+            new AuthManager();
+        };
 
-    if (window.supabaseClient) {
-        initAuth();
-    } else {
-        window.addEventListener('supabaseReady', () => {
+        if (window.supabaseClient) {
             initAuth();
-        });
+        } else {
+            window.addEventListener('supabaseReady', () => {
+                initAuth();
+            });
+        }
     }
 });
