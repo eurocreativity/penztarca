@@ -42,6 +42,7 @@ class FinanceApp {
                 noChartData: 'Nincsenek adatok',
                 actualSpending: 'Tényleges költés',
                 plannedBudget: 'Tervezett költségvetés',
+                income: 'Bevétel',
                 deleteConfirm: 'Biztosan törölni szeretnéd ezt a kiadást?',
                 invalidAmount: 'Kérlek, adj meg egy érvényes összeget!',
                 selectCategoryError: 'Kérlek, válassz egy kategóriát!',
@@ -95,6 +96,7 @@ class FinanceApp {
                 noChartData: 'No data',
                 actualSpending: 'Actual spending',
                 plannedBudget: 'Planned budget',
+                income: 'Income',
                 deleteConfirm: 'Are you sure you want to delete this expense?',
                 invalidAmount: 'Please enter a valid amount!',
                 selectCategoryError: 'Please select a category!',
@@ -873,7 +875,34 @@ class FinanceApp {
         }
     }
 
+    calculateBalance() {
+        const totalIncome = this.expenses
+            .filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + t.amount, 0);
+
+        const totalExpense = this.expenses
+            .filter(t => t.type === 'expense' || !t.type) // Handle legacy data without type
+            .reduce((sum, t) => sum + t.amount, 0);
+
+        const balance = totalIncome - totalExpense;
+
+        // Update UI
+        const balanceElement = document.getElementById('currentBalance');
+        const incomeElement = document.getElementById('totalIncome');
+
+        if (balanceElement) {
+            balanceElement.textContent = this.formatCurrency(balance);
+            // Add color indication for balance
+            balanceElement.className = `text-xl font-semibold ${balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`;
+        }
+
+        if (incomeElement) {
+            incomeElement.textContent = this.formatCurrency(totalIncome);
+        }
+    }
+
     updateUI() {
+        this.calculateBalance();
         this.updateBudgetDisplay();
         this.updateQuickStats();
         this.updateRecentExpenses();
@@ -885,7 +914,10 @@ class FinanceApp {
         try {
             const currentMonth = new Date().toISOString().slice(0, 7);
             const monthlyExpenses = this.expenses
-                .filter(expense => expense.date.startsWith(currentMonth))
+                .filter(expense =>
+                    expense.date.startsWith(currentMonth) &&
+                    (expense.type === 'expense' || !expense.type)
+                )
                 .reduce((sum, expense) => sum + expense.amount, 0);
 
             const progressElement = document.getElementById('budgetProgress');
@@ -943,11 +975,17 @@ class FinanceApp {
         const currentMonth = new Date().toISOString().slice(0, 7);
 
         const todayExpenses = this.expenses
-            .filter(expense => expense.date === today)
+            .filter(expense =>
+                expense.date === today &&
+                (expense.type === 'expense' || !expense.type)
+            )
             .reduce((sum, expense) => sum + expense.amount, 0);
 
         const monthlyExpenses = this.expenses
-            .filter(expense => expense.date.startsWith(currentMonth))
+            .filter(expense =>
+                expense.date.startsWith(currentMonth) &&
+                (expense.type === 'expense' || !expense.type)
+            )
             .reduce((sum, expense) => sum + expense.amount, 0);
 
         document.getElementById('todayExpenses').textContent = this.formatCurrency(todayExpenses);
@@ -967,6 +1005,10 @@ class FinanceApp {
 
         recentList.innerHTML = recentExpenses.map(expense => {
             const category = this.categories.find(c => c.id === expense.category);
+            const isIncome = expense.type === 'income';
+            const amountClass = isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-warm-600 dark:text-warm-400';
+            const sign = isIncome ? '+' : '';
+
             return `
                 <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-stone-700 rounded-xl hover:shadow-md transition-all duration-300">
                     <div class="flex items-center space-x-3">
@@ -979,7 +1021,7 @@ class FinanceApp {
                         </div>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <span class="font-semibold text-warm-600 dark:text-warm-400">${this.formatCurrency(expense.amount)}</span>
+                        <span class="font-semibold ${amountClass}">${sign}${this.formatCurrency(expense.amount)}</span>
                         <button onclick="financeApp.editExpense(${expense.id})" class="text-blue-500 hover:text-blue-700 p-1">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -1007,11 +1049,13 @@ class FinanceApp {
         }
 
         const categoryTotals = {};
-        this.expenses.forEach(expense => {
-            const category = this.categories.find(c => c.id === expense.category);
-            const categoryName = category?.name || 'Ismeretlen';
-            categoryTotals[categoryName] = (categoryTotals[categoryName] || 0) + expense.amount;
-        });
+        this.expenses
+            .filter(expense => expense.type === 'expense' || !expense.type)
+            .forEach(expense => {
+                const category = this.categories.find(c => c.id === expense.category);
+                const categoryName = category?.name || 'Ismeretlen';
+                categoryTotals[categoryName] = (categoryTotals[categoryName] || 0) + expense.amount;
+            });
 
         const labels = Object.keys(categoryTotals);
         const data = Object.values(categoryTotals);
@@ -1068,6 +1112,7 @@ class FinanceApp {
         const monthlyData = this.getMonthlyData();
         const labels = monthlyData.map(item => item.month);
         const expenseData = monthlyData.map(item => item.expenses);
+        const incomeData = monthlyData.map(item => item.income);
         const budgetData = monthlyData.map(() => this.budget);
 
         const ctx = canvas.getContext('2d');
@@ -1082,6 +1127,13 @@ class FinanceApp {
                     data: expenseData,
                     borderColor: '#ef4444',
                     backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: this.getText('income'),
+                    data: incomeData,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     tension: 0.4,
                     fill: true
                 }, {
@@ -1142,12 +1194,23 @@ class FinanceApp {
             const monthName = date.toLocaleDateString('hu-HU', { year: 'numeric', month: 'short' });
 
             const monthlyExpenses = this.expenses
-                .filter(expense => expense.date.startsWith(monthKey))
+                .filter(expense =>
+                    expense.date.startsWith(monthKey) &&
+                    (expense.type === 'expense' || !expense.type)
+                )
+                .reduce((sum, expense) => sum + expense.amount, 0);
+
+            const monthlyIncome = this.expenses
+                .filter(expense =>
+                    expense.date.startsWith(monthKey) &&
+                    expense.type === 'income'
+                )
                 .reduce((sum, expense) => sum + expense.amount, 0);
 
             months.push({
                 month: monthName,
-                expenses: monthlyExpenses
+                expenses: monthlyExpenses,
+                income: monthlyIncome
             });
         }
 
