@@ -394,11 +394,17 @@ class FinanceApp {
 
     getDefaultCategories() {
         return [
-            { id: 'food', name: 'Élelmiszer', color: '#f59e0b', icon: 'fas fa-utensils' },
-            { id: 'transport', name: 'Közlekedés', color: '#3b82f6', icon: 'fas fa-car' },
-            { id: 'entertainment', name: 'Szórakozás', color: '#8b5cf6', icon: 'fas fa-gamepad' },
-            { id: 'bills', name: 'Számlák', color: '#ef4444', icon: 'fas fa-file-invoice' },
-            { id: 'other', name: 'Egyéb', color: '#6b7280', icon: 'fas fa-ellipsis-h' }
+            // Expense categories
+            { id: 'food', name: 'Élelmiszer', color: '#f59e0b', icon: 'fas fa-utensils', type: 'expense' },
+            { id: 'transport', name: 'Közlekedés', color: '#3b82f6', icon: 'fas fa-car', type: 'expense' },
+            { id: 'entertainment', name: 'Szórakozás', color: '#8b5cf6', icon: 'fas fa-gamepad', type: 'expense' },
+            { id: 'bills', name: 'Számlák', color: '#ef4444', icon: 'fas fa-file-invoice', type: 'expense' },
+            { id: 'other', name: 'Egyéb', color: '#6b7280', icon: 'fas fa-ellipsis-h', type: 'expense' },
+            // Income categories
+            { id: 'salary', name: 'Fizetés', color: '#10b981', icon: 'fas fa-money-bill-wave', type: 'income' },
+            { id: 'bonus', name: 'Prémium', color: '#34d399', icon: 'fas fa-award', type: 'income' },
+            { id: 'freelance', name: 'Megbízás', color: '#6ee7b7', icon: 'fas fa-laptop-code', type: 'income' },
+            { id: 'other_income', name: 'Egyéb bevétel', color: '#a7f3d0', icon: 'fas fa-hand-holding-usd', type: 'income' }
         ];
     }
 
