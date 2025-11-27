@@ -146,6 +146,11 @@
                 </div>
             </div>
 
+            <!-- Spending Forecast -->
+            <div id="spendingForecast" class="mb-6">
+                <!-- Forecast will be populated here -->
+            </div>
+
             <!-- Quick Stats -->
             <div class="space-y-6">
                 <!-- Today's Expenses -->
@@ -307,6 +312,43 @@
             </div>
         </div>
 
+        <!-- Category Budgets -->
+        <div class="mb-10">
+            <div
+                class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white" data-lang="categoryBudgets">Kategóriánkénti Költségkeret</h2>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                        <span data-lang="currentMonth">Aktuális hónap</span>
+                    </div>
+                </div>
+                <div id="categoryBudgetsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Category budgets will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Top 5 Biggest Expenses -->
+        <div class="mb-10">
+            <div
+                class="bg-gradient-to-br from-warm-50 to-orange-50 dark:from-warm-900/20 dark:to-orange-900/20 backdrop-blur-sm rounded-2xl shadow-xl p-8 border-2 border-warm-300 dark:border-warm-700 hover:shadow-2xl transition-all duration-300">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-3 bg-gradient-to-br from-warm-500 to-orange-600 rounded-xl">
+                            <i class="fas fa-trophy text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white" data-lang="topExpenses">Top 5 Legnagyobb Kiadás</h2>
+                    </div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                        <span data-lang="currentMonth">Aktuális hónap</span>
+                    </div>
+                </div>
+                <div id="topExpensesList" class="space-y-3">
+                    <!-- Top 5 expenses will be populated here -->
+                </div>
+            </div>
+        </div>
+
         <!-- Charts -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
             <!-- Expense Category Chart -->
@@ -330,13 +372,29 @@
             </div>
         </div>
 
-        <!-- Monthly Trend Chart -->
-        <div class="grid grid-cols-1 gap-8">
+        <!-- Comparison and Trend Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Monthly Comparison Chart -->
+            <div
+                class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-blue-200/50 dark:border-blue-600/50 hover:shadow-2xl transition-all duration-300">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white" data-lang="comparisonChart">Havi Összehasonlítás</h2>
+                    <select id="comparisonPeriod" class="px-3 py-1 text-sm border border-gray-300 dark:border-stone-600 rounded-lg dark:bg-stone-700 dark:text-white">
+                        <option value="lastMonth" data-lang="vsLastMonth">vs. Előző hónap</option>
+                        <option value="lastYear" data-lang="vsLastYear">vs. Tavaly</option>
+                    </select>
+                </div>
+                <div class="relative h-80">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Monthly Trend Chart -->
             <div
                 class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4" data-lang="monthlyTrend">Havi Trend
                 </h2>
-                <div class="relative h-96">
+                <div class="relative h-80">
                     <canvas id="trendChart"></canvas>
                 </div>
             </div>

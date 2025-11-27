@@ -6,8 +6,9 @@ Ez a mappa tartalmazza az adatbázis migrációs scripteket a Supabase adatbázi
 
 Futtasd a scripteket **ebben a sorrendben**:
 
-1. **`add_type_to_categories.sql`** - Hozzáadja a `type` mezőt
-2. **`add_income_categories_for_existing_users.sql`** - Létrehozza a bevételi kategóriákat meglévő felhasználóknak
+1. **`add_type_to_categories.sql`** - Hozzáadja a `type` mezőt ✅ KÉSZ
+2. **`add_income_categories_for_existing_users.sql`** - Létrehozza a bevételi kategóriákat meglévő felhasználóknak ✅ KÉSZ
+3. **`add_category_budget_limit.sql`** - Hozzáadja a `budget_limit` mezőt kategóriánkénti költségkeret kezeléshez 🆕 ÚJ
 
 ---
 
@@ -61,6 +62,31 @@ https://supabase.com/dashboard/project/oavxilimosjrodillmea
   - Megbízás
   - Egyéb bevétel
 - Megjeleníti az eredményt felhasználónként csoportosítva
+
+---
+
+## Migration 3: Add Category Budget Limit
+
+### 3c. Futtasd a harmadik scriptet: `add_category_budget_limit.sql`
+
+1. Nyisd meg a `add_category_budget_limit.sql` fájlt
+2. Másold ki a teljes tartalmat
+3. Illeszd be a Supabase SQL Editor-ba (új query)
+4. Kattints a **Run** gombra
+
+**Mit csinál:**
+- Hozzáadja a `budget_limit` mezőt a `categories` táblához (ha még nem létezik)
+- Alapértelmezett érték: `NULL` (nincs limit beállítva)
+- Lehetővé teszi, hogy kategóriánként külön költségkeretet állíts be
+- Megjeleníti a kategóriákat az új mezővel
+
+**Példa használat:**
+```sql
+-- Beállítasz 50,000 Ft limitet az Élelmiszer kategóriára
+UPDATE categories
+SET budget_limit = 50000
+WHERE name = 'Élelmiszer' AND user_id = 'your-user-id';
+```
 
 ---
 
