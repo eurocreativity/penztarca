@@ -330,14 +330,7 @@
             const initApp = async () => {
                 if (!window.app) {
                     window.app = new FinanceApp();
-                    // We don't await init() here to avoid blocking, 
-                    // but FinanceApp constructor calls init() anyway.
-                    // However, init() is async, so we should be careful.
-                    // Actually, the constructor calls init(), so we don't need to call it again here
-                    // or we should remove the call from constructor. 
-                    // Let's check the constructor.
-                    // The constructor calls this.init().
-                    // So we just need to instantiate it.
+                    window.financeApp = window.app; // Create global reference for onclick handlers
                 }
             };
 

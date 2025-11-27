@@ -274,11 +274,24 @@ class FinanceApp {
         }
 
         if (headerActions) {
+            // Add category management button if it doesn't exist
+            if (!document.getElementById('manageCategoriesBtn')) {
+                const manageCategoriesBtn = document.createElement('button');
+                manageCategoriesBtn.id = 'manageCategoriesBtn';
+                manageCategoriesBtn.className = 'px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5';
+                manageCategoriesBtn.innerHTML = `<i class="fas fa-tags mr-2"></i><span data-lang="manageCategories">${this.getText('manageCategories')}</span>`;
+                manageCategoriesBtn.addEventListener('click', () => {
+                    this.showCategoryManager();
+                });
+                // Insert at the beginning
+                headerActions.insertBefore(manageCategoriesBtn, headerActions.firstChild);
+            }
+
             // Add logout button if it doesn't exist
             if (!document.getElementById('logoutBtn')) {
                 const logoutBtn = document.createElement('button');
                 logoutBtn.id = 'logoutBtn';
-                logoutBtn.className = 'px-4 py-2 text-primary-600 hover:text-primary-700 transition-colors duration-300';
+                logoutBtn.className = 'px-6 py-3 bg-gradient-to-r from-warm-500 to-warm-600 text-white rounded-xl hover:from-warm-600 hover:to-warm-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold';
                 logoutBtn.innerHTML = `<i class="fas fa-sign-out-alt mr-2"></i><span data-lang="logout">${this.getText('logout')}</span>`;
                 logoutBtn.addEventListener('click', async () => {
                     if (confirm('Biztosan kilépsz?')) {
@@ -289,20 +302,9 @@ class FinanceApp {
                         }
                     }
                 });
+                // Append at the end for visibility
                 headerActions.appendChild(logoutBtn);
             }
-        }
-
-        // Add category management button
-        if (headerActions && !document.getElementById('manageCategoriesBtn')) {
-            const manageCategoriesBtn = document.createElement('button');
-            manageCategoriesBtn.id = 'manageCategoriesBtn';
-            manageCategoriesBtn.className = 'px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5';
-            manageCategoriesBtn.innerHTML = `<i class="fas fa-tags mr-2"></i><span data-lang="manageCategories">${this.getText('manageCategories')}</span>`;
-            manageCategoriesBtn.addEventListener('click', () => {
-                this.showCategoryManager();
-            });
-            headerActions.insertBefore(manageCategoriesBtn, headerActions.firstChild);
         }
     }
 
@@ -426,6 +428,9 @@ class FinanceApp {
             }
         });
 
+        // Transaction type listener for filtering categories
+        this.setupTransactionTypeListener();
+
         // Language selector
         document.getElementById('languageSelector').addEventListener('change', async (e) => {
             this.currentLanguage = e.target.value;
@@ -450,6 +455,27 @@ class FinanceApp {
         // Show all expenses
         document.getElementById('showAllExpenses').addEventListener('click', () => {
             this.showAllExpensesModal();
+        });
+
+        // Modal close button
+        document.getElementById('closeModal')?.addEventListener('click', () => {
+            this.closeExpensesModal();
+        });
+
+        // Close modal on backdrop click
+        document.getElementById('expensesModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'expensesModal') {
+                this.closeExpensesModal();
+            }
+        });
+
+        // Filter change handlers
+        document.getElementById('filterCategory')?.addEventListener('change', () => {
+            this.renderAllExpenses();
+        });
+
+        document.getElementById('filterMonth')?.addEventListener('change', () => {
+            this.renderAllExpenses();
         });
     }
 
@@ -735,12 +761,12 @@ class FinanceApp {
     }
 
     updateCategorySelectors() {
-        const selectors = document.querySelectorAll('#expenseCategory, #categoryFilter');
+        const selectors = document.querySelectorAll('#expenseCategory, #filterCategory');
         selectors.forEach(selector => {
             const currentValue = selector.value;
             selector.innerHTML = '';
 
-            if (selector.id === 'categoryFilter') {
+            if (selector.id === 'filterCategory') {
                 const option = document.createElement('option');
                 option.value = '';
                 option.textContent = this.getText('allCategories');
@@ -1287,9 +1313,76 @@ class FinanceApp {
     }
 
     showAllExpensesModal() {
-        // Implementation for showing all expenses in a modal
-        // This can be expanded based on needs
-        console.log('Show all expenses modal');
+        const modal = document.getElementById('expensesModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            this.renderAllExpenses();
+        }
+    }
+
+    closeExpensesModal() {
+        const modal = document.getElementById('expensesModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    renderAllExpenses() {
+        const allExpensesList = document.getElementById('allExpensesList');
+        if (!allExpensesList) return;
+
+        const filterCategory = document.getElementById('filterCategory')?.value || '';
+        const filterMonth = document.getElementById('filterMonth')?.value || '';
+
+        let filteredExpenses = [...this.expenses];
+
+        // Filter by category
+        if (filterCategory) {
+            filteredExpenses = filteredExpenses.filter(expense => expense.category == filterCategory);
+        }
+
+        // Filter by month
+        if (filterMonth) {
+            filteredExpenses = filteredExpenses.filter(expense => expense.date.startsWith(filterMonth));
+        }
+
+        // Sort by date (newest first)
+        filteredExpenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if (filteredExpenses.length === 0) {
+            allExpensesList.innerHTML = `<div class="text-center text-gray-500 dark:text-gray-400 py-8">${filterCategory || filterMonth ? this.getText('noFilteredExpenses') : this.getText('noExpenses')}</div>`;
+            return;
+        }
+
+        allExpensesList.innerHTML = filteredExpenses.map(expense => {
+            const category = this.categories.find(c => c.id === expense.category);
+            const isIncome = expense.type === 'income';
+            const amountClass = isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-warm-600 dark:text-warm-400';
+            const sign = isIncome ? '+' : '';
+
+            return `
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-stone-700 rounded-xl hover:shadow-md transition-all duration-300">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: ${category?.color || '#6b7280'}20">
+                            <i class="${category?.icon || 'fas fa-ellipsis-h'}" style="color: ${category?.color || '#6b7280'}"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">${expense.description}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">${category?.name || 'Ismeretlen'} • ${this.formatDate(expense.date)}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-semibold ${amountClass}">${sign}${this.formatCurrency(expense.amount)}</span>
+                        <button onclick="financeApp.editExpense(${expense.id})" class="text-blue-500 hover:text-blue-700 p-1">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="financeApp.deleteExpense(${expense.id})" class="text-red-500 hover:text-red-700 p-1">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     exportData() {
@@ -1420,38 +1513,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dateInput && !dateInput.value) {
         dateInput.value = new Date().toISOString().slice(0, 10);
     }
-
-    // Filter category dropdown based on transaction type
-    filterCategoriesByType(type) {
-        const select = document.getElementById('expenseCategory');
-        if (!select) return;
-        
-        // Clear current options except the first (placeholder)
-        select.innerHTML = '<option value="">Válassz kategóriát</option>';
-        
-        // Filter and add categories based on type
-        const filteredCategories = this.categories.filter(cat => cat.type === type || !cat.type);
-        
-        filteredCategories.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat.id;
-            option.textContent = cat.name;
-            select.appendChild(option);
-        });
-    }
-
-    // Setup transaction type listener
-    setupTransactionTypeListener() {
-        const typeRadios = document.getElementsByName('transactionType');
-        typeRadios.forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                this.filterCategoriesByType(e.target.value);
-            });
-        });
-        
-        // Initialize with default type (expense)
-        this.filterCategoriesByType('expense');
-    }
-}
+});
 
 // Initialize app
