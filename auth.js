@@ -15,12 +15,20 @@ class AuthManager {
 
     init() {
         console.log('AuthManager initializing...');
-        this.setupEventListeners();
+
+        // Only setup form listeners if we're on the auth page
+        const isAuthPage = window.location.pathname.includes('auth.html') ||
+                          document.getElementById('loginFormElement');
+
+        if (isAuthPage) {
+            this.setupEventListeners();
+        }
+
         this.checkAuthStatus();
     }
 
     setupEventListeners() {
-        console.log('Setting up event listeners...');
+        console.log('Setting up auth page event listeners...');
 
         // Form toggle buttons
         const showRegisterBtn = document.getElementById('showRegisterBtn');
