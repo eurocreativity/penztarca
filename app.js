@@ -35,6 +35,26 @@ class FinanceApp {
                 incomeCategoryChart: 'Bevételek Kategóriánként',
                 monthlyTrend: 'Havi Trend',
                 allExpenses: 'Összes Kiadás',
+                topExpenses: 'Top 5 Legnagyobb Kiadás',
+                currentMonth: 'Aktuális hónap',
+                noTopExpenses: 'Még nincsenek kiadások ebben a hónapban',
+                categoryBudgets: 'Kategóriánkénti Költségkeret',
+                noBudgetSet: 'Nincs limit beállítva',
+                ofLimit: 'a limitből',
+                forecastTitle: 'Előrejelzés',
+                forecastGood: 'Jó ütemben haladsz!',
+                forecastWarning: 'Vigyázz, közel vagy a limithez!',
+                forecastDanger: 'Túlköltés várható!',
+                forecastExpected: 'Várható költés a hónap végére:',
+                forecastRemaining: 'Várható maradék:',
+                daysLeft: 'Hátralévő napok:',
+                comparisonChart: 'Havi Összehasonlítás',
+                vsLastMonth: 'vs. Előző hónap',
+                vsLastYear: 'vs. Tavaly',
+                thisMonth: 'Ez a hónap',
+                lastMonth: 'Előző hónap',
+                lastYear: 'Tavaly',
+                change: 'Változás',
                 allCategories: 'Minden kategória',
                 export: 'Export',
                 import: 'Import',
@@ -64,6 +84,7 @@ class FinanceApp {
                 categoryName: 'Kategória neve',
                 categoryColor: 'Szín',
                 categoryIcon: 'Ikon',
+                categoryBudgetLimit: 'Havi költségkeret (opcionális)',
                 saveCategory: 'Mentés',
                 deleteCategory: 'Törlés',
                 cancelEdit: 'Mégse'
@@ -91,6 +112,26 @@ class FinanceApp {
                 incomeCategoryChart: 'Income by Category',
                 monthlyTrend: 'Monthly Trend',
                 allExpenses: 'All Expenses',
+                topExpenses: 'Top 5 Biggest Expenses',
+                currentMonth: 'Current Month',
+                noTopExpenses: 'No expenses this month yet',
+                categoryBudgets: 'Category Budgets',
+                noBudgetSet: 'No limit set',
+                ofLimit: 'of limit',
+                forecastTitle: 'Forecast',
+                forecastGood: 'On track!',
+                forecastWarning: 'Getting close to budget!',
+                forecastDanger: 'Overspending expected!',
+                forecastExpected: 'Expected spending by month end:',
+                forecastRemaining: 'Expected remaining:',
+                daysLeft: 'Days left:',
+                comparisonChart: 'Monthly Comparison',
+                vsLastMonth: 'vs. Last Month',
+                vsLastYear: 'vs. Last Year',
+                thisMonth: 'This Month',
+                lastMonth: 'Last Month',
+                lastYear: 'Last Year',
+                change: 'Change',
                 allCategories: 'All categories',
                 export: 'Export',
                 import: 'Import',
@@ -120,6 +161,7 @@ class FinanceApp {
                 categoryName: 'Category Name',
                 categoryColor: 'Color',
                 categoryIcon: 'Icon',
+                categoryBudgetLimit: 'Monthly Budget Limit (optional)',
                 saveCategory: 'Save',
                 deleteCategory: 'Delete',
                 cancelEdit: 'Cancel'
@@ -487,6 +529,14 @@ class FinanceApp {
             this.importData(e);
         });
 
+        // Comparison period selector
+        const comparisonPeriod = document.getElementById('comparisonPeriod');
+        if (comparisonPeriod) {
+            comparisonPeriod.addEventListener('change', () => {
+                this.updateComparisonChart();
+            });
+        }
+
         // Show all expenses
         document.getElementById('showAllExpenses').addEventListener('click', () => {
             this.showAllExpensesModal();
@@ -583,6 +633,13 @@ class FinanceApp {
                                     </label>
                                 </div>
                             </div>
+                            <div id="budgetLimitField">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <span data-lang="categoryBudgetLimit">Havi költségkeret (opcionális)</span>
+                                </label>
+                                <input type="number" id="categoryBudgetInput" placeholder="0" class="w-full px-3 py-2 border border-gray-300 dark:border-stone-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-stone-600 dark:text-white">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hagyd üresen ha nincs limit. Csak kiadás típusú kategóriákhoz.</p>
+                            </div>
                             <div class="flex space-x-2">
                                 <button id="saveCategoryBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
                                     <span data-lang="saveCategory">${this.getText('saveCategory')}</span>
@@ -666,6 +723,7 @@ class FinanceApp {
             document.getElementById('categoryNameInput').value = category.name;
             document.getElementById('categoryColorInput').value = category.color;
             document.getElementById('categoryIconInput').value = category.icon;
+            document.getElementById('categoryBudgetInput').value = category.budget_limit || '';
             // Set type radio buttons
             const typeRadios = document.getElementsByName('categoryType');
             typeRadios.forEach(radio => {
@@ -676,6 +734,7 @@ class FinanceApp {
             document.getElementById('categoryNameInput').value = '';
             document.getElementById('categoryColorInput').value = '#f59e0b';
             document.getElementById('categoryIconInput').value = 'fas fa-ellipsis-h';
+            document.getElementById('categoryBudgetInput').value = '';
             // Default to expense type
             const typeRadios = document.getElementsByName('categoryType');
             typeRadios.forEach(radio => {
@@ -696,6 +755,7 @@ class FinanceApp {
         const color = document.getElementById('categoryColorInput').value;
         const icon = document.getElementById('categoryIconInput').value;
         const type = document.querySelector('input[name="categoryType"]:checked').value;
+        const budgetLimit = document.getElementById('categoryBudgetInput').value;
 
         if (!name) {
             alert('Kérlek add meg a kategória nevét!');
@@ -708,7 +768,8 @@ class FinanceApp {
                 name,
                 color,
                 icon,
-                type
+                type,
+                budget_limit: budgetLimit && budgetLimit > 0 ? parseFloat(budgetLimit) : null
             };
 
             if (editingId) {
@@ -1000,8 +1061,11 @@ class FinanceApp {
     updateUI() {
         this.calculateBalance();
         this.updateBudgetDisplay();
+        this.updateSpendingForecast();
         this.updateQuickStats();
         this.updateRecentExpenses();
+        this.updateCategoryBudgets();
+        this.updateTopExpenses();
         this.updateCharts();
         this.updateCategorySelectors();
     }
@@ -1166,10 +1230,392 @@ class FinanceApp {
         }).join('');
     }
 
+    updateTopExpenses() {
+        const topList = document.getElementById('topExpensesList');
+        const currentMonth = new Date().toISOString().slice(0, 7);
+
+        // Filter current month expenses only (not income)
+        const monthlyExpenses = this.expenses
+            .filter(expense =>
+                expense.date.startsWith(currentMonth) &&
+                (expense.type === 'expense' || !expense.type)
+            )
+            .sort((a, b) => b.amount - a.amount)
+            .slice(0, 5);
+
+        if (monthlyExpenses.length === 0) {
+            topList.innerHTML = `<div class="text-center text-gray-500 dark:text-gray-400 py-8">${this.getText('noTopExpenses')}</div>`;
+            return;
+        }
+
+        topList.innerHTML = monthlyExpenses.map((expense, index) => {
+            const category = this.categories.find(c => c.id === expense.category);
+            const rankColors = [
+                'from-amber-400 to-yellow-500',    // 1st - Gold
+                'from-gray-300 to-gray-400',       // 2nd - Silver
+                'from-orange-400 to-orange-600',   // 3rd - Bronze
+                'from-blue-400 to-blue-500',       // 4th - Blue
+                'from-purple-400 to-purple-500'    // 5th - Purple
+            ];
+            const rankIcons = ['👑', '🥈', '🥉', '4️⃣', '5️⃣'];
+
+            return `
+                <div class="relative flex items-center justify-between p-5 bg-white dark:bg-stone-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border-l-4" style="border-color: ${category?.color || '#6b7280'}">
+                    <div class="flex items-center space-x-4 flex-1">
+                        <!-- Rank Badge -->
+                        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br ${rankColors[index]} flex items-center justify-center text-white font-bold text-lg shadow-md">
+                            ${index + 1}
+                        </div>
+
+                        <!-- Category Icon -->
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm" style="background-color: ${category?.color || '#6b7280'}20">
+                            <i class="${category?.icon || 'fas fa-ellipsis-h'} text-xl" style="color: ${category?.color || '#6b7280'}"></i>
+                        </div>
+
+                        <!-- Expense Details -->
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold text-gray-900 dark:text-white text-lg truncate">${expense.description}</p>
+                            <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                <span class="font-medium" style="color: ${category?.color || '#6b7280'}">${category?.name || 'Ismeretlen'}</span>
+                                <span>•</span>
+                                <span>${this.formatDate(expense.date)}</span>
+                            </div>
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="flex items-center space-x-3">
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-warm-600 dark:text-warm-400">
+                                    ${this.formatCurrency(expense.amount)}
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex items-center space-x-1">
+                                <button onclick="financeApp.editExpense(${expense.id})" class="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="financeApp.deleteExpense(${expense.id})" class="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    updateSpendingForecast() {
+        const forecastDiv = document.getElementById('spendingForecast');
+
+        // Only show if budget is set
+        if (!this.budget || this.budget <= 0) {
+            forecastDiv.innerHTML = '';
+            return;
+        }
+
+        const now = new Date();
+        const currentMonth = now.toISOString().slice(0, 7);
+        const currentDay = now.getDate();
+
+        // Get days in current month
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const daysRemaining = daysInMonth - currentDay;
+
+        // Calculate monthly expenses so far
+        const monthlyExpenses = this.expenses
+            .filter(expense =>
+                expense.date.startsWith(currentMonth) &&
+                (expense.type === 'expense' || !expense.type)
+            )
+            .reduce((sum, expense) => sum + expense.amount, 0);
+
+        // Calculate daily average
+        const dailyAverage = monthlyExpenses / currentDay;
+
+        // Forecast total spending by month end
+        const forecastedTotal = monthlyExpenses + (dailyAverage * daysRemaining);
+        const forecastedRemaining = this.budget - forecastedTotal;
+        const forecastPercentage = (forecastedTotal / this.budget) * 100;
+
+        // Determine alert level
+        let alertClass, iconClass, icon, message;
+        if (forecastPercentage >= 100) {
+            alertClass = 'bg-red-50 dark:bg-red-900/20 border-red-500';
+            iconClass = 'text-red-600 dark:text-red-400';
+            icon = 'fas fa-exclamation-triangle';
+            message = this.getText('forecastDanger');
+        } else if (forecastPercentage >= 85) {
+            alertClass = 'bg-orange-50 dark:bg-orange-900/20 border-orange-500';
+            iconClass = 'text-orange-600 dark:text-orange-400';
+            icon = 'fas fa-exclamation-circle';
+            message = this.getText('forecastWarning');
+        } else {
+            alertClass = 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500';
+            iconClass = 'text-emerald-600 dark:text-emerald-400';
+            icon = 'fas fa-check-circle';
+            message = this.getText('forecastGood');
+        }
+
+        forecastDiv.innerHTML = `
+            <div class="${alertClass} border-l-4 rounded-xl p-4 shadow-md">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <i class="${icon} ${iconClass} text-2xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-900 dark:text-white mb-2">
+                            <i class="fas fa-crystal-ball mr-2"></i>${this.getText('forecastTitle')}: ${message}
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-600 dark:text-gray-400">${this.getText('forecastExpected')}</p>
+                                <p class="font-bold ${iconClass} text-lg">${this.formatCurrency(forecastedTotal)}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 dark:text-gray-400">${this.getText('forecastRemaining')}</p>
+                                <p class="font-bold ${iconClass} text-lg">${forecastedRemaining >= 0 ? '+' : ''}${this.formatCurrency(forecastedRemaining)}</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                ${this.getText('daysLeft')} <span class="font-semibold">${daysRemaining}</span> •
+                                Napi átlag: <span class="font-semibold">${this.formatCurrency(dailyAverage)}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    updateCategoryBudgets() {
+        const budgetsList = document.getElementById('categoryBudgetsList');
+        const currentMonth = new Date().toISOString().slice(0, 7);
+
+        // Filter expense categories with budget limits
+        const categoriesWithBudget = this.categories.filter(cat =>
+            (cat.type === 'expense' || !cat.type) && cat.budget_limit && cat.budget_limit > 0
+        );
+
+        if (categoriesWithBudget.length === 0) {
+            budgetsList.innerHTML = `
+                <div class="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
+                    <i class="fas fa-wallet text-4xl mb-3 opacity-50"></i>
+                    <p>${this.getText('noBudgetSet')}</p>
+                    <p class="text-sm mt-2">Állíts be költségkeretet a kategóriákhoz a Kategóriák menüben!</p>
+                </div>
+            `;
+            return;
+        }
+
+        budgetsList.innerHTML = categoriesWithBudget.map(category => {
+            // Calculate spending for this category this month
+            const spent = this.expenses
+                .filter(expense =>
+                    expense.date.startsWith(currentMonth) &&
+                    (expense.type === 'expense' || !expense.type) &&
+                    expense.category == category.id
+                )
+                .reduce((sum, expense) => sum + expense.amount, 0);
+
+            const limit = category.budget_limit;
+            const percentage = (spent / limit) * 100;
+
+            // Color coding
+            let colorClass, bgClass, borderClass;
+            if (percentage >= 100) {
+                colorClass = 'text-red-600 dark:text-red-400';
+                bgClass = 'bg-red-500';
+                borderClass = 'border-red-500';
+            } else if (percentage >= 75) {
+                colorClass = 'text-orange-600 dark:text-orange-400';
+                bgClass = 'bg-orange-500';
+                borderClass = 'border-orange-500';
+            } else if (percentage >= 50) {
+                colorClass = 'text-yellow-600 dark:text-yellow-400';
+                bgClass = 'bg-yellow-500';
+                borderClass = 'border-yellow-500';
+            } else {
+                colorClass = 'text-emerald-600 dark:text-emerald-400';
+                bgClass = 'bg-emerald-500';
+                borderClass = 'border-emerald-500';
+            }
+
+            return `
+                <div class="p-4 bg-gray-50 dark:bg-stone-700 rounded-xl border-l-4 ${borderClass} hover:shadow-md transition-all duration-300">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: ${category.color}20">
+                                <i class="${category.icon} text-sm" style="color: ${category.color}"></i>
+                            </div>
+                            <span class="font-semibold text-gray-900 dark:text-white">${category.name}</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-gray-200 dark:bg-stone-600 rounded-full h-3 overflow-hidden">
+                            <div class="${bgClass} h-full rounded-full transition-all duration-500" style="width: ${Math.min(percentage, 100)}%"></div>
+                        </div>
+
+                        <!-- Amounts -->
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="font-bold ${colorClass}">${this.formatCurrency(spent)}</span>
+                            <span class="text-gray-500 dark:text-gray-400">${this.formatCurrency(limit)}</span>
+                        </div>
+
+                        <!-- Percentage -->
+                        <div class="text-center">
+                            <span class="text-xs font-semibold ${colorClass}">
+                                ${percentage.toFixed(1)}% ${this.getText('ofLimit')}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
     updateCharts() {
         this.updateCategoryChart();
         this.updateIncomeCategoryChart();
+        this.updateComparisonChart();
         this.updateTrendChart();
+    }
+
+    updateComparisonChart() {
+        const canvas = document.getElementById('comparisonChart');
+        if (!canvas) return;
+
+        // Destroy existing chart
+        if (this.comparisonChartInstance) {
+            this.comparisonChartInstance.destroy();
+        }
+
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        // Get comparison period from dropdown
+        const periodSelect = document.getElementById('comparisonPeriod');
+        const period = periodSelect ? periodSelect.value : 'lastMonth';
+
+        let comparisonMonth;
+        let comparisonLabel;
+
+        if (period === 'lastMonth') {
+            const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            comparisonMonth = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
+            comparisonLabel = this.getText('lastMonth');
+        } else {
+            // Last year same month
+            comparisonMonth = `${now.getFullYear() - 1}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            comparisonLabel = this.getText('lastYear');
+        }
+
+        // Calculate totals for current month
+        const currentExpenses = this.expenses
+            .filter(e => e.date.startsWith(currentMonth) && (e.type === 'expense' || !e.type))
+            .reduce((sum, e) => sum + e.amount, 0);
+
+        const currentIncome = this.expenses
+            .filter(e => e.date.startsWith(currentMonth) && e.type === 'income')
+            .reduce((sum, e) => sum + e.amount, 0);
+
+        // Calculate totals for comparison month
+        const comparisonExpenses = this.expenses
+            .filter(e => e.date.startsWith(comparisonMonth) && (e.type === 'expense' || !e.type))
+            .reduce((sum, e) => sum + e.amount, 0);
+
+        const comparisonIncome = this.expenses
+            .filter(e => e.date.startsWith(comparisonMonth) && e.type === 'income')
+            .reduce((sum, e) => sum + e.amount, 0);
+
+        // Calculate percentage changes
+        const expenseChange = comparisonExpenses > 0
+            ? ((currentExpenses - comparisonExpenses) / comparisonExpenses * 100).toFixed(1)
+            : 0;
+        const incomeChange = comparisonIncome > 0
+            ? ((currentIncome - comparisonIncome) / comparisonIncome * 100).toFixed(1)
+            : 0;
+
+        const ctx = canvas.getContext('2d');
+        const isDark = document.documentElement.classList.contains('dark');
+
+        this.comparisonChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [this.getText('thisMonth'), comparisonLabel],
+                datasets: [
+                    {
+                        label: this.getText('expense'),
+                        data: [currentExpenses, comparisonExpenses],
+                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        borderWidth: 2
+                    },
+                    {
+                        label: this.getText('income'),
+                        data: [currentIncome, comparisonIncome],
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: isDark ? '#fff' : '#374151',
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const label = context.dataset.label || '';
+                                const value = this.formatCurrency(context.parsed.y);
+                                const dataIndex = context.dataIndex;
+                                const change = dataIndex === 0 ?
+                                    (context.datasetIndex === 0 ? expenseChange : incomeChange) : '';
+
+                                if (dataIndex === 0 && change) {
+                                    const changeText = change > 0 ? `+${change}%` : `${change}%`;
+                                    return `${label}: ${value} (${changeText})`;
+                                }
+                                return `${label}: ${value}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: (value) => this.formatCurrency(value),
+                            color: isDark ? '#9ca3af' : '#6b7280'
+                        },
+                        grid: {
+                            color: isDark ? '#374151' : '#e5e7eb'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: isDark ? '#9ca3af' : '#6b7280'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
     }
 
     updateCategoryChart() {

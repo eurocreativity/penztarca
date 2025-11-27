@@ -557,34 +557,353 @@ const filteredCategories = this.categories.filter(
 
 ---
 
-## 🎓 Next Steps & Future Enhancements
+## 🎓 Development Roadmap - 2025
 
-### Immediate (After Migration)
+### 📅 **FÁZIS 1 - Quick Wins** (1-2 hét) 🔄 IN PROGRESS
+
+**Prioritás:** MAGAS | **Komplexitás:** KÖNNYŰ-KÖZEPES | **Branch:** `claude/phase1-quick-wins-017PEwetc7Mj1CvBwd8eVYjo`
+
+#### Feature 1.1: Top 5 Legnagyobb Kiadás Widget
+- [ ] **Státusz:** Pending
+- **Mit ad:** Gyorsan látható dashboard widget a top 5 legnagyobb kiadásról
+- **Előny:** Azonnal látszik, hol ment el a legtöbb pénz, hol lehet spórolni
+- **Implementáció:**
+  - Új kártya a dashboard-on a quick stats mellett
+  - Rendezés összeg szerint csökkenő sorrendben
+  - Megjelenítés: összeg, kategória név (színnel), dátum, leírás
+  - Kattintható elemek → edit módba ugrik
+
+#### Feature 1.2: Kategóriánkénti Költségkeret
+- [ ] **Státusz:** Pending
+- **Mit ad:** Minden kategóriára (Élelmiszer, Közlekedés, stb.) külön limit beállítása
+- **Előny:** Részletesebb kontroll, kategóriánként látható túlköltés
+- **Implementáció:**
+  - Database: `ALTER TABLE categories ADD COLUMN budget_limit DECIMAL`
+  - UI: Budget input a category manager-ben
+  - Quick stats: Kategóriánként mini progress bar
+  - Színes jelzés: zöld (jó) → sárga (közel) → piros (túllépés)
+
+#### Feature 1.3: Költési Előrejelzés
+- [ ] **Státusz:** Pending
+- **Mit ad:** Előrejelzés: "Ha így költesz tovább, a hónap végére X Ft-od marad"
+- **Előny:** Korai figyelmeztetés túlköltésre, proaktív pénzügyi tervezés
+- **Implementáció:**
+  - Számítás: eddigi napi átlag × hátralévő napok = várható további költés
+  - Előrejelzett maradék = budget - (eddigi + várható)
+  - Alert banner ha negatív előrejelzés
+  - Grafikon a trend chart mellett
+
+#### Feature 1.4: Havi Összehasonlító Riport
+- [ ] **Státusz:** Pending
+- **Mit ad:** "Ez hónap vs. múlt hónap" összehasonlítás (összeg, kategóriánként)
+- **Előny:** Trendek felismerése, havi fejlődés nyomon követése
+- **Implementáció:**
+  - Új chart: Bar chart összehasonlítással
+  - Dropdown: "Összehasonlítás: Előző hónap / Előző év / Egyedi időszak"
+  - Százalékos változás megjelenítése (+15% vagy -10%)
+  - Kategóriánkénti breakdown
+
+**Tesztelési Instrukciók (Fázis 1 befejezése után):**
+1. Frissítsd a böngészőt (Ctrl+Shift+R)
+2. Ellenőrizd az új widgeteket a dashboard-on
+3. Teszteld a kategóriánkénti költségkeret beállítást
+4. Nézd meg az előrejelzést és az összehasonlító riportot
+5. Teszteld dark mode-ban is
+
+---
+
+### 📅 **FÁZIS 2 - Core Features** (2-3 hét)
+
+**Prioritás:** MAGAS | **Komplexitás:** KÖZEPES
+
+#### Feature 2.1: Ismétlődő Tranzakciók
+- [ ] **Státusz:** Planned
+- **Mit ad:** Havi fix kiadások/bevételek automatikus rögzítése (fizetés, albérlet, számlák)
+- **Előny:** Időmegtakarítás, nem kell havonta felvinni ugyanazokat
+- **Implementáció:**
+  ```sql
+  CREATE TABLE recurring_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    amount DECIMAL NOT NULL,
+    category_id INTEGER REFERENCES categories(id),
+    description TEXT NOT NULL,
+    frequency TEXT NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly', 'yearly')),
+    start_date DATE NOT NULL,
+    end_date DATE,
+    last_created_date DATE,
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  );
+  ```
+  - UI: "Ismétlődik" checkbox a tranzakció hozzáadásakor
+  - Beállítások: gyakoriság, kezdő dátum, opcionális végdátum
+  - Cronjob vagy bejelentkezéskor automatikus létrehozás
+  - Recurring template manager: enable/disable/edit
+
+#### Feature 2.2: Naptár Nézet
+- [ ] **Státusz:** Planned
+- **Mit ad:** Kiadások/bevételek naptár formában
+- **Előny:** Gyorsan átlátható, melyik napon mennyi ment el
+- **Implementáció:**
+  - Library: FullCalendar.js vagy egyszerű CSS Grid
+  - Minden nap: összköltés/bevétel badge
+  - Színkódolás: piros (kiadás), zöld (bevétel), kék (mindkettő)
+  - Kattintásra: modal az adott napi tételekkel
+  - Havi/heti nézet kapcsoló
+
+#### Feature 2.3: Keresés és Fejlett Szűrés
+- [ ] **Státusz:** Planned
+- **Mit ad:** Keresés leírás szerint, szűrés összeg tartomány szerint
+- **Előny:** Gyorsan megtalálható bármely konkrét tétel
+- **Implementáció:**
+  - Search input: real-time filter (leírás, összeg)
+  - Szűrő opciók:
+    - Összeg tartomány: min-max slider
+    - Dátum tartomány: date picker
+    - Kategória: multi-select
+    - Típus: kiadás/bevétel/mindkettő
+  - "Szűrők törlése" gomb
+  - Találatok száma megjelenítése
+
+#### Feature 2.4: Gyors Beviteli Sablonok
+- [ ] **Státusz:** Planned
+- **Mit ad:** Gyakori kiadások 1 kattintással (pl. "Napi kávé - 800 Ft")
+- **Előny:** Időmegtakarítás, gyorsabb rögzítés
+- **Implementáció:**
+  ```sql
+  CREATE TABLE quick_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    amount DECIMAL NOT NULL,
+    category_id INTEGER REFERENCES categories(id),
+    description TEXT NOT NULL,
+    icon TEXT,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  );
+  ```
+  - "Csillag" gomb a tranzakcióknál → Sablonként mentés
+  - Floating action buttons a dashboard-on (max 5-6 sablon)
+  - Template manager: edit/delete/reorder
+  - 1 kattintással új tranzakció az aktuális dátummal
+
+---
+
+### 📅 **FÁZIS 3 - Advanced Features** (3-4 hét)
+
+**Prioritás:** KÖZEPES | **Komplexitás:** KÖZEPES-NEHÉZ
+
+#### Feature 3.1: Megtakarítási Célok
+- [ ] **Státusz:** Planned
+- **Mit ad:** Célok kitűzése (pl. "Új laptop - 500,000 Ft"), progress tracking
+- **Előny:** Motiváló, látható a haladás
+- **Implementáció:**
+  ```sql
+  CREATE TABLE savings_goals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    target_amount DECIMAL NOT NULL,
+    current_amount DECIMAL DEFAULT 0,
+    deadline DATE,
+    color TEXT DEFAULT '#3b82f6',
+    icon TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  );
+  ```
+  - Új "Célok" oldal/modal
+  - Progress bar minden célra (százalék + összeg)
+  - "Hozzáadás célhoz" gomb a bevételnél
+  - Opcionális: auto-save (bevétel X%-a automatikusan megy a célba)
+  - Határidő figyelmeztetés
+
+#### Feature 3.2: Címkék/Tagek
+- [ ] **Státusz:** Planned
+- **Mit ad:** Kategórián túl további címkézés (pl. "munkahelyi", "hétvége", "ajándék")
+- **Előny:** Rugalmasabb szűrés és elemzés
+- **Implementáció:**
+  ```sql
+  CREATE TABLE tags (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    color TEXT DEFAULT '#6b7280'
+  );
+  CREATE TABLE expense_tags (
+    expense_id INTEGER REFERENCES expenses(id) ON DELETE CASCADE,
+    tag_id UUID REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (expense_id, tag_id)
+  );
+  ```
+  - Multi-select tag input a tranzakció hozzáadásakor
+  - Tag manager: create/edit/delete
+  - Szűrés tag szerint
+  - Tag-alapú statisztikák és chartok
+
+#### Feature 3.3: PDF/Excel Export
+- [ ] **Státusz:** Planned
+- **Mit ad:** Professzionális riportok exportálása könyveléshez
+- **Előny:** Megosztható, nyomtatható, könyvelőnek küldhető
+- **Implementáció:**
+  - Library: jsPDF (PDF), SheetJS (Excel)
+  - Export opciók:
+    - Időszak választás (hónap/év/egyedi)
+    - Formátum: PDF / Excel / CSV
+    - Tartalom: részletes lista / összesítő / chartokkal
+  - Template-ek:
+    - Egyszerű lista (tétel-szintű)
+    - Kategóriánkénti összesítő
+    - Havi riport (chartokkal, statisztikákkal)
+  - PDF fejléc: felhasználó neve, dátum, logo
+
+#### Feature 3.4: PWA (Progressive Web App)
+- [ ] **Státusz:** Planned
+- **Mit ad:** Telepíthető mobilra/desktopra, offline működés
+- **Előny:** Natív app élmény, offline használat
+- **Implementáció:**
+  - `manifest.json` létrehozása:
+    ```json
+    {
+      "name": "PénzTár - Személyes Pénzügy",
+      "short_name": "PénzTár",
+      "start_url": "/",
+      "display": "standalone",
+      "background_color": "#ffffff",
+      "theme_color": "#f59e0b",
+      "icons": [...]
+    }
+    ```
+  - Service Worker: offline cache, background sync
+  - Install prompt UI
+  - Offline detection és sync később
+
+---
+
+### 📅 **FÁZIS 4 - Enterprise Features** (1-2 hónap)
+
+**Prioritás:** ALACSONY | **Komplexitás:** NEHÉZ-NAGYON NEHÉZ
+
+#### Feature 4.1: Számla/Pénztárca Kezelés
+- [ ] **Státusz:** Planned
+- **Mit ad:** Több számla kezelése (Készpénz, OTP Bank, Hitelkártya, stb.)
+- **Előny:** Valós pénzügyi kép, átutalások követése
+- **Implementáció:**
+  ```sql
+  CREATE TABLE accounts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    type TEXT CHECK (type IN ('cash', 'checking', 'savings', 'credit_card', 'investment')),
+    balance DECIMAL DEFAULT 0,
+    currency TEXT DEFAULT 'HUF',
+    color TEXT,
+    icon TEXT,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  );
+  ALTER TABLE expenses ADD COLUMN account_id UUID REFERENCES accounts(id);
+  ALTER TABLE expenses ADD COLUMN transfer_to_account_id UUID REFERENCES accounts(id);
+  ```
+  - Account manager: create/edit/delete/set default
+  - Dashboard: összes számla egyenlege
+  - Tranzakciónál: számla választás
+  - Transfer funkció: "Átutalás számlák között"
+  - Auto-balance számítás
+
+#### Feature 4.2: Nyugta/Kép Feltöltés
+- [ ] **Státusz:** Planned
+- **Mit ad:** Fotó csatolása kiadáshoz (nyugta, számla)
+- **Előny:** Teljes dokumentáció, könyveléshez hasznos
+- **Implementáció:**
+  - Supabase Storage bucket: `receipts`
+  - File upload UI (drag & drop vagy browse)
+  - Image compression kliens oldalon
+  - Thumbnail generálás
+  - Gallery view a tranzakcióban
+  - Lightbox/zoom nagy képhez
+  - OCR (opcionális, later): összeg automatikus felismerés
+
+#### Feature 4.3: Értesítések
+- [ ] **Státusz:** Planned
+- **Mit ad:** Email/push értesítés túlköltésnél, közelgő számlákról
+- **Előny:** Proaktív pénzügyi kontroll
+- **Implementáció:**
+  - Supabase Edge Functions (Deno)
+  - Email: Supabase Auth email vagy SendGrid
+  - Push: Web Push API + service worker
+  - Notification beállítások:
+    - Budget alert (75%, 90%, 100%, 110%)
+    - Ismétlődő számla emlékeztető (X nappal előtte)
+    - Napi/heti összesítő
+    - Cél elérése
+  - User preferences táblázat
+
+#### Feature 4.4: Multi-valuta Támogatás
+- [ ] **Státusz:** Planned
+- **Mit ad:** Külföldi kiadások rögzítése (EUR, USD, GBP, stb.)
+- **Előny:** Utazóknál/nemzetközi munkánál elengedhetetlen
+- **Implementáció:**
+  - ALTER TABLE expenses ADD COLUMN currency TEXT DEFAULT 'HUF'
+  - ALTER TABLE expenses ADD COLUMN exchange_rate DECIMAL
+  - API integráció: exchangerate-api.com (ingyenes tier)
+  - Naponta frissülő árfolyamok cache-elése
+  - Tranzakciónál: valuta választó
+  - Auto-konverzió HUF-ra a kimutatásokhoz
+  - Multi-currency chart opció
+
+#### Feature 4.5: Megosztott Kiadások
+- [ ] **Státusz:** Planned
+- **Mit ad:** Közös költések kezelése (pl. albérlet, családi vásárlás)
+- **Előny:** Könnyebb elszámolás, nincs utólagos matekozás
+- **Implementáció:**
+  - Multiuser support: meghívások, hozzáférés kezelés
+  - Split logika:
+    - Egyenlő megosztás (50-50)
+    - Arányos megosztás (30-70)
+    - Egyedi összegek
+    - Százalékos
+  - "Ki fizette" és "Ki tartozik" követése
+  - Settle up funkció (elszámolás)
+  - Notification: új megosztott kiadás
+
+---
+
+## 📊 Roadmap Összefoglaló
+
+| Fázis | Időigény | Funkciók | Prioritás | Státusz |
+|-------|----------|----------|-----------|---------|
+| **Fázis 1** | 1-2 hét | 4 quick win feature | 🔴 MAGAS | 🔄 IN PROGRESS |
+| **Fázis 2** | 2-3 hét | 4 core feature | 🔴 MAGAS | ⏳ Planned |
+| **Fázis 3** | 3-4 hét | 4 advanced feature | 🟡 KÖZEPES | ⏳ Planned |
+| **Fázis 4** | 1-2 hónap | 5 enterprise feature | 🟢 ALACSONY | ⏳ Planned |
+
+**Teljes roadmap:** ~3-4 hónap fejlesztés
+
+---
+
+## 🎯 Next Steps & Future Enhancements
+
+### ✅ Immediate (Completed)
 1. ✅ Run `migrations/add_type_to_categories.sql`
-2. Test income category functionality
-3. Merge to `develop` branch
-4. Deploy to production
+2. ✅ Test income category functionality
+3. ✅ Merge to `develop` branch
+4. ✅ Deploy to production
 
-### Short-term Enhancements
-- [ ] Add CSV export/import
-- [ ] Transaction search and advanced filtering
-- [ ] Recurring transactions
-- [ ] Budget categories (separate budgets per category)
-- [ ] Email notifications for budget alerts
+### 🔄 Current Sprint (Fázis 1 - IN PROGRESS)
+1. [ ] Top 5 Legnagyobb Kiadás Widget
+2. [ ] Kategóriánkénti Költségkeret
+3. [ ] Költési Előrejelzés
+4. [ ] Havi Összehasonlító Riport
 
-### Medium-term Features
-- [ ] Multi-currency support
-- [ ] Savings goals tracking
-- [ ] Bill reminders
-- [ ] Receipt photo upload (Supabase Storage)
-- [ ] Monthly/yearly reports (PDF)
-
-### Long-term Vision
-- [ ] Mobile app (React Native / PWA)
-- [ ] Shared budgets (family accounts)
-- [ ] Bank account integration
-- [ ] AI-powered spending insights
-- [ ] Investment tracking
+### 📋 Backlog (Fázis 2-4)
+- Ismétlődő tranzakciók (Fázis 2)
+- Naptár nézet (Fázis 2)
+- Megtakarítási célok (Fázis 3)
+- PWA support (Fázis 3)
+- Multi-currency (Fázis 4)
+- Shared expenses (Fázis 4)
 
 ---
 
