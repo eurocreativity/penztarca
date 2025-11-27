@@ -1532,6 +1532,38 @@ class FinanceApp {
             return defaultValue;
         }
     }
+
+    // Filter category dropdown based on transaction type
+    filterCategoriesByType(type) {
+        const select = document.getElementById('expenseCategory');
+        if (!select) return;
+
+        // Clear current options except the first (placeholder)
+        select.innerHTML = '<option value="">Válassz kategóriát</option>';
+
+        // Filter and add categories based on type
+        const filteredCategories = this.categories.filter(cat => cat.type === type || !cat.type);
+
+        filteredCategories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id;
+            option.textContent = cat.name;
+            select.appendChild(option);
+        });
+    }
+
+    // Setup transaction type listener
+    setupTransactionTypeListener() {
+        const typeRadios = document.getElementsByName('transactionType');
+        typeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.filterCategoriesByType(e.target.value);
+            });
+        });
+
+        // Initialize with default type (expense)
+        this.filterCategoriesByType('expense');
+    }
 }
 
 
