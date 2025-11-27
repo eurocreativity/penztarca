@@ -128,8 +128,18 @@ class FinanceApp {
     async init() {
         try {
             console.log('Initializing app...');
+
+            // Wait a moment for Supabase to fully initialize
+            await new Promise(resolve => setTimeout(resolve, 100));
+
             // Check authentication
             const { data: { session }, error: authError } = await window.supabaseClient.auth.getSession();
+
+            console.log('Auth check result:', {
+                hasSession: !!session,
+                userId: session?.user?.id,
+                error: authError
+            });
 
             if (authError) {
                 console.error('Auth error:', authError);
@@ -138,7 +148,7 @@ class FinanceApp {
             }
 
             if (!session) {
-                console.log('No authenticated session, redirecting...');
+                console.log('No authenticated session, redirecting to auth.html...');
                 window.location.href = 'auth.html';
                 return;
             }
