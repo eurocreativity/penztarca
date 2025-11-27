@@ -1448,6 +1448,12 @@ class FinanceApp {
 
                 this.expenses = this.expenses.filter(e => e.id !== expenseId);
                 this.updateUI();
+
+                // If modal is open, refresh the list
+                const modal = document.getElementById('expensesModal');
+                if (modal && !modal.classList.contains('hidden')) {
+                    this.renderAllExpenses();
+                }
             } catch (error) {
                 console.error('Error deleting expense:', error);
                 alert(this.getText('saveError'));
