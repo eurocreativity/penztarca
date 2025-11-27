@@ -6,7 +6,14 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Initializing Supabase client...');
             const supabase = window.supabase.createClient(
                 'https://oavxilimosjrodillmea.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hdnhpbGltb3Nqcm9kaWxsbWVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNTQ3NzksImV4cCI6MjA3MzYzMDc3OX0.BQMeFbWZmrEXN3kOurUd_wyn6Dh0jVk417if-QRdMbY'
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hdnhpbGltb3Nqcm9kaWxsbWVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNTQ3NzksImV4cCI6MjA3MzYzMDc3OX0.BQMeFbWZmrEXN3kOurUd_wyn6Dh0jVk417if-QRdMbY',
+                {
+                    auth: {
+                        persistSession: true,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: true
+                    }
+                }
             );
 
             // Export the initialized client globally

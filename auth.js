@@ -391,9 +391,19 @@ class AuthManager {
 
             console.log('Login successful:', data);
             this.showSuccess('loginSuccess', 'Sikeres bejelentkezés!');
-            setTimeout(() => {
+
+            // Wait for session to be fully persisted before redirecting
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Verify session exists before redirect
+            const { data: { session: verifySession } } = await window.supabaseClient.auth.getSession();
+            if (verifySession) {
+                console.log('Session verified, redirecting to index.html');
                 window.location.href = 'index.html';
-            }, 1000);
+            } else {
+                console.error('Session not found after login');
+                this.showError('loginError', 'Sikertelen bejelentkezés. Kérlek próbáld újra.');
+            }
         } catch (error) {
             console.error('Unexpected error during login:', error);
             this.showError('loginError', 'Váratlan hiba történt. Kérlek, próbáld újra később.');
