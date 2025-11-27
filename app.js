@@ -796,32 +796,31 @@ class FinanceApp {
     }
 
     updateCategorySelectors() {
-        const selectors = document.querySelectorAll('#expenseCategory, #filterCategory');
-        selectors.forEach(selector => {
-            const currentValue = selector.value;
-            selector.innerHTML = '';
+        // Only update filterCategory, not expenseCategory
+        // expenseCategory is managed by filterCategoriesByType()
+        const filterCategory = document.getElementById('filterCategory');
+        if (filterCategory) {
+            const currentValue = filterCategory.value;
+            filterCategory.innerHTML = '';
 
-            if (selector.id === 'filterCategory') {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = this.getText('allCategories');
-                selector.appendChild(option);
-            } else {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = this.getText('selectCategory');
-                selector.appendChild(option);
-            }
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = this.getText('allCategories');
+            filterCategory.appendChild(option);
 
             this.categories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category.id;
                 option.textContent = category.name;
-                selector.appendChild(option);
+                filterCategory.appendChild(option);
             });
 
-            selector.value = currentValue;
-        });
+            filterCategory.value = currentValue;
+        }
+
+        // Refresh the expense category dropdown based on current transaction type
+        const selectedType = document.querySelector('input[name="transactionType"]:checked')?.value || 'expense';
+        this.filterCategoriesByType(selectedType);
     }
 
     // Rest of the existing methods with authentication integration...
