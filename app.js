@@ -35,6 +35,9 @@ class FinanceApp {
                 incomeCategoryChart: 'Bevételek Kategóriánként',
                 monthlyTrend: 'Havi Trend',
                 allExpenses: 'Összes Kiadás',
+                topExpenses: 'Top 5 Legnagyobb Kiadás',
+                currentMonth: 'Aktuális hónap',
+                noTopExpenses: 'Még nincsenek kiadások ebben a hónapban',
                 allCategories: 'Minden kategória',
                 export: 'Export',
                 import: 'Import',
@@ -91,6 +94,9 @@ class FinanceApp {
                 incomeCategoryChart: 'Income by Category',
                 monthlyTrend: 'Monthly Trend',
                 allExpenses: 'All Expenses',
+                topExpenses: 'Top 5 Biggest Expenses',
+                currentMonth: 'Current Month',
+                noTopExpenses: 'No expenses this month yet',
                 allCategories: 'All categories',
                 export: 'Export',
                 import: 'Import',
@@ -1002,6 +1008,7 @@ class FinanceApp {
         this.updateBudgetDisplay();
         this.updateQuickStats();
         this.updateRecentExpenses();
+        this.updateTopExpenses();
         this.updateCharts();
         this.updateCategorySelectors();
     }
@@ -1160,6 +1167,82 @@ class FinanceApp {
                         <button onclick="financeApp.deleteExpense(${expense.id})" class="text-red-500 hover:text-red-700 p-1">
                             <i class="fas fa-trash"></i>
                         </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    updateTopExpenses() {
+        const topList = document.getElementById('topExpensesList');
+        const currentMonth = new Date().toISOString().slice(0, 7);
+
+        // Filter current month expenses only (not income)
+        const monthlyExpenses = this.expenses
+            .filter(expense =>
+                expense.date.startsWith(currentMonth) &&
+                (expense.type === 'expense' || !expense.type)
+            )
+            .sort((a, b) => b.amount - a.amount)
+            .slice(0, 5);
+
+        if (monthlyExpenses.length === 0) {
+            topList.innerHTML = `<div class="text-center text-gray-500 dark:text-gray-400 py-8">${this.getText('noTopExpenses')}</div>`;
+            return;
+        }
+
+        topList.innerHTML = monthlyExpenses.map((expense, index) => {
+            const category = this.categories.find(c => c.id === expense.category);
+            const rankColors = [
+                'from-amber-400 to-yellow-500',    // 1st - Gold
+                'from-gray-300 to-gray-400',       // 2nd - Silver
+                'from-orange-400 to-orange-600',   // 3rd - Bronze
+                'from-blue-400 to-blue-500',       // 4th - Blue
+                'from-purple-400 to-purple-500'    // 5th - Purple
+            ];
+            const rankIcons = ['👑', '🥈', '🥉', '4️⃣', '5️⃣'];
+
+            return `
+                <div class="relative flex items-center justify-between p-5 bg-white dark:bg-stone-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border-l-4" style="border-color: ${category?.color || '#6b7280'}">
+                    <div class="flex items-center space-x-4 flex-1">
+                        <!-- Rank Badge -->
+                        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br ${rankColors[index]} flex items-center justify-center text-white font-bold text-lg shadow-md">
+                            ${index + 1}
+                        </div>
+
+                        <!-- Category Icon -->
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm" style="background-color: ${category?.color || '#6b7280'}20">
+                            <i class="${category?.icon || 'fas fa-ellipsis-h'} text-xl" style="color: ${category?.color || '#6b7280'}"></i>
+                        </div>
+
+                        <!-- Expense Details -->
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold text-gray-900 dark:text-white text-lg truncate">${expense.description}</p>
+                            <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                <span class="font-medium" style="color: ${category?.color || '#6b7280'}">${category?.name || 'Ismeretlen'}</span>
+                                <span>•</span>
+                                <span>${this.formatDate(expense.date)}</span>
+                            </div>
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="flex items-center space-x-3">
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-warm-600 dark:text-warm-400">
+                                    ${this.formatCurrency(expense.amount)}
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex items-center space-x-1">
+                                <button onclick="financeApp.editExpense(${expense.id})" class="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="financeApp.deleteExpense(${expense.id})" class="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
