@@ -48,6 +48,13 @@ class FinanceApp {
                 forecastExpected: 'Várható költés a hónap végére:',
                 forecastRemaining: 'Várható maradék:',
                 daysLeft: 'Hátralévő napok:',
+                comparisonChart: 'Havi Összehasonlítás',
+                vsLastMonth: 'vs. Előző hónap',
+                vsLastYear: 'vs. Tavaly',
+                thisMonth: 'Ez a hónap',
+                lastMonth: 'Előző hónap',
+                lastYear: 'Tavaly',
+                change: 'Változás',
                 allCategories: 'Minden kategória',
                 export: 'Export',
                 import: 'Import',
@@ -118,6 +125,13 @@ class FinanceApp {
                 forecastExpected: 'Expected spending by month end:',
                 forecastRemaining: 'Expected remaining:',
                 daysLeft: 'Days left:',
+                comparisonChart: 'Monthly Comparison',
+                vsLastMonth: 'vs. Last Month',
+                vsLastYear: 'vs. Last Year',
+                thisMonth: 'This Month',
+                lastMonth: 'Last Month',
+                lastYear: 'Last Year',
+                change: 'Change',
                 allCategories: 'All categories',
                 export: 'Export',
                 import: 'Import',
@@ -514,6 +528,14 @@ class FinanceApp {
         document.getElementById('importBtn').addEventListener('change', (e) => {
             this.importData(e);
         });
+
+        // Comparison period selector
+        const comparisonPeriod = document.getElementById('comparisonPeriod');
+        if (comparisonPeriod) {
+            comparisonPeriod.addEventListener('change', () => {
+                this.updateComparisonChart();
+            });
+        }
 
         // Show all expenses
         document.getElementById('showAllExpenses').addEventListener('click', () => {
@@ -1459,7 +1481,141 @@ class FinanceApp {
     updateCharts() {
         this.updateCategoryChart();
         this.updateIncomeCategoryChart();
+        this.updateComparisonChart();
         this.updateTrendChart();
+    }
+
+    updateComparisonChart() {
+        const canvas = document.getElementById('comparisonChart');
+        if (!canvas) return;
+
+        // Destroy existing chart
+        if (this.comparisonChartInstance) {
+            this.comparisonChartInstance.destroy();
+        }
+
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        // Get comparison period from dropdown
+        const periodSelect = document.getElementById('comparisonPeriod');
+        const period = periodSelect ? periodSelect.value : 'lastMonth';
+
+        let comparisonMonth;
+        let comparisonLabel;
+
+        if (period === 'lastMonth') {
+            const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            comparisonMonth = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
+            comparisonLabel = this.getText('lastMonth');
+        } else {
+            // Last year same month
+            comparisonMonth = `${now.getFullYear() - 1}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            comparisonLabel = this.getText('lastYear');
+        }
+
+        // Calculate totals for current month
+        const currentExpenses = this.expenses
+            .filter(e => e.date.startsWith(currentMonth) && (e.type === 'expense' || !e.type))
+            .reduce((sum, e) => sum + e.amount, 0);
+
+        const currentIncome = this.expenses
+            .filter(e => e.date.startsWith(currentMonth) && e.type === 'income')
+            .reduce((sum, e) => sum + e.amount, 0);
+
+        // Calculate totals for comparison month
+        const comparisonExpenses = this.expenses
+            .filter(e => e.date.startsWith(comparisonMonth) && (e.type === 'expense' || !e.type))
+            .reduce((sum, e) => sum + e.amount, 0);
+
+        const comparisonIncome = this.expenses
+            .filter(e => e.date.startsWith(comparisonMonth) && e.type === 'income')
+            .reduce((sum, e) => sum + e.amount, 0);
+
+        // Calculate percentage changes
+        const expenseChange = comparisonExpenses > 0
+            ? ((currentExpenses - comparisonExpenses) / comparisonExpenses * 100).toFixed(1)
+            : 0;
+        const incomeChange = comparisonIncome > 0
+            ? ((currentIncome - comparisonIncome) / comparisonIncome * 100).toFixed(1)
+            : 0;
+
+        const ctx = canvas.getContext('2d');
+        const isDark = document.documentElement.classList.contains('dark');
+
+        this.comparisonChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [this.getText('thisMonth'), comparisonLabel],
+                datasets: [
+                    {
+                        label: this.getText('expense'),
+                        data: [currentExpenses, comparisonExpenses],
+                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        borderWidth: 2
+                    },
+                    {
+                        label: this.getText('income'),
+                        data: [currentIncome, comparisonIncome],
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: isDark ? '#fff' : '#374151',
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const label = context.dataset.label || '';
+                                const value = this.formatCurrency(context.parsed.y);
+                                const dataIndex = context.dataIndex;
+                                const change = dataIndex === 0 ?
+                                    (context.datasetIndex === 0 ? expenseChange : incomeChange) : '';
+
+                                if (dataIndex === 0 && change) {
+                                    const changeText = change > 0 ? `+${change}%` : `${change}%`;
+                                    return `${label}: ${value} (${changeText})`;
+                                }
+                                return `${label}: ${value}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: (value) => this.formatCurrency(value),
+                            color: isDark ? '#9ca3af' : '#6b7280'
+                        },
+                        grid: {
+                            color: isDark ? '#374151' : '#e5e7eb'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: isDark ? '#9ca3af' : '#6b7280'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
     }
 
     updateCategoryChart() {
