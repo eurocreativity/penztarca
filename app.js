@@ -32,6 +32,7 @@ class FinanceApp {
                 recentExpenses: 'Legutóbbi Kiadások',
                 viewAll: 'Összes megtekintése',
                 categoryChart: 'Kiadások Kategóriánként',
+                incomeCategoryChart: 'Bevételek Kategóriánként',
                 monthlyTrend: 'Havi Trend',
                 allExpenses: 'Összes Kiadás',
                 allCategories: 'Minden kategória',
@@ -87,6 +88,7 @@ class FinanceApp {
                 recentExpenses: 'Recent Expenses',
                 viewAll: 'View all',
                 categoryChart: 'Expenses by Category',
+                incomeCategoryChart: 'Income by Category',
                 monthlyTrend: 'Monthly Trend',
                 allExpenses: 'All Expenses',
                 allCategories: 'All categories',
@@ -1167,6 +1169,7 @@ class FinanceApp {
 
     updateCharts() {
         this.updateCategoryChart();
+        this.updateIncomeCategoryChart();
         this.updateTrendChart();
     }
 
@@ -1204,6 +1207,72 @@ class FinanceApp {
         const ctx = canvas.getContext('2d');
 
         this.categoryChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: colors,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            color: document.documentElement.classList.contains('dark') ? '#fff' : '#374151'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    updateIncomeCategoryChart() {
+        const canvas = document.getElementById('incomeCategoryChart');
+        if (!canvas) return;
+
+        // Destroy existing chart
+        if (this.incomeCategoryChartInstance) {
+            this.incomeCategoryChartInstance.destroy();
+        }
+
+        const categoryTotals = {};
+        this.expenses
+            .filter(expense => expense.type === 'income')
+            .forEach(expense => {
+                const category = this.categories.find(c => c.id === expense.category);
+                const categoryName = category?.name || 'Ismeretlen';
+                categoryTotals[categoryName] = (categoryTotals[categoryName] || 0) + expense.amount;
+            });
+
+        const labels = Object.keys(categoryTotals);
+        const data = Object.values(categoryTotals);
+        const colors = labels.map(label => {
+            const category = this.categories.find(c => c.name === label);
+            return category?.color || '#10b981';
+        });
+
+        if (data.length === 0) {
+            // Show placeholder message instead of hiding
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = '16px sans-serif';
+            ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280';
+            ctx.textAlign = 'center';
+            ctx.fillText('Még nincsenek bevételek', canvas.width / 2, canvas.height / 2);
+            return;
+        }
+
+        canvas.style.display = 'block';
+        const ctx = canvas.getContext('2d');
+
+        this.incomeCategoryChartInstance = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 labels: labels,
