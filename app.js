@@ -27,6 +27,7 @@ class FinanceApp {
                 description: 'Leírás',
                 date: 'Dátum',
                 addExpense: 'Kiadás Hozzáadása',
+                addIncome: 'Bevétel Hozzáadása',
                 editExpense: 'Kiadás Módosítása',
                 recentExpenses: 'Legutóbbi Kiadások',
                 viewAll: 'Összes megtekintése',
@@ -81,6 +82,7 @@ class FinanceApp {
                 description: 'Description',
                 date: 'Date',
                 addExpense: 'Add Expense',
+                addIncome: 'Add Income',
                 editExpense: 'Edit Expense',
                 recentExpenses: 'Recent Expenses',
                 viewAll: 'View all',
@@ -405,7 +407,8 @@ class FinanceApp {
                     user_id: this.currentUser.id,
                     name: c.name,
                     color: c.color,
-                    icon: c.icon
+                    icon: c.icon,
+                    type: c.type
                 }));
 
                 const { data: newCategories, error: insertError } = await window.supabaseClient
@@ -1581,7 +1584,7 @@ class FinanceApp {
         if (!select) return;
 
         // Clear current options except the first (placeholder)
-        select.innerHTML = '<option value="">Válassz kategóriát</option>';
+        select.innerHTML = `<option value="">${this.getText('selectCategory')}</option>`;
 
         // Filter and add categories based on type
         const filteredCategories = this.categories.filter(cat => cat.type === type || !cat.type);
@@ -1609,10 +1612,10 @@ class FinanceApp {
                 // Change submit button text and icon
                 if (submitButton) {
                     if (type === 'income') {
-                        submitButton.textContent = 'Bevétel Hozzáadása';
+                        submitButton.textContent = this.getText('addIncome');
                         submitButton.setAttribute('data-lang', 'addIncome');
                     } else {
-                        submitButton.textContent = 'Kiadás Hozzáadása';
+                        submitButton.textContent = this.getText('addExpense');
                         submitButton.setAttribute('data-lang', 'addExpense');
                     }
                 }
