@@ -1,8 +1,9 @@
 # PénzTár - Project Status & Development Guide
 
-**Utolsó frissítés:** 2025-11-27
-**Jelenlegi verzió:** Income Categories Support
+**Utolsó frissítés:** 2025-11-27 (Migrációk futtatva ✅)
+**Jelenlegi verzió:** Income Categories Support - PRODUCTION READY
 **Aktív branch:** `claude/setup-project-links-017PEwetc7Mj1CvBwd8eVYjo`
+**Státusz:** 🟢 Kész a deployment-re
 
 ---
 
@@ -65,8 +66,9 @@ penztarca/
 ├── README.md              # Project documentation
 ├── PROJECT_STATUS.md      # This file
 ├── migrations/
-│   ├── add_type_to_categories.sql  # Database migration for category types
-│   └── README.md                    # Migration instructions
+│   ├── add_type_to_categories.sql                  # Migration 1: Add type field
+│   ├── add_income_categories_for_existing_users.sql # Migration 2: Create income categories
+│   └── README.md                                    # Migration instructions
 └── .github/
     └── copilot-instructions.md
 ```
@@ -183,44 +185,69 @@ All tables should have RLS enabled with policies:
 
 ### ✅ Recently Completed (2025-11-27)
 
-**Feature: Income Category Support**
+#### **Phase 1: Income Category Support - Core Implementation**
+- **Commit:** `1dba64c` - "Add income category support with type-based filtering"
 - **Problem:** When adding income, no categories appeared in the dropdown
 - **Root Cause:**
   - `ensureCategories()` didn't copy `type` field when creating default categories
   - Database missing `type` column in categories table
 - **Solution:**
   - Fixed `ensureCategories()` to include `type: c.type` (app.js:409)
-  - Updated `filterCategoriesByType()` for i18n support (app.js:1584)
+  - Updated `filterCategoriesByType()` for i18n support (app.js:1584-1595)
   - Added `addIncome` translation key (app.js:30, 85)
-  - Created database migration script
+  - Created database migration script: `add_type_to_categories.sql`
 - **Files Modified:**
-  - `app.js` (lines 30, 85, 409, 1584, 1615-1619)
+  - `app.js` (lines 30, 85, 409, 1584-1595, 1612-1617)
   - `migrations/add_type_to_categories.sql` (new)
   - `migrations/README.md` (new)
-- **Commit:** `1dba64c` - "Add income category support with type-based filtering"
-- **Branch:** `claude/setup-project-links-017PEwetc7Mj1CvBwd8eVYjo`
 
-### 🔄 Pending Actions
+#### **Phase 2: Documentation & Existing Users Support**
+- **Commit:** `ce1b7e9` - "Add comprehensive project status and development guide"
+- **Added:** Complete `PROJECT_STATUS.md` with all project information
 
-1. **CRITICAL: Run Database Migration**
-   - Status: ⚠️ **MUST BE DONE BEFORE DEPLOYING**
-   - Action: Execute `migrations/add_type_to_categories.sql` in Supabase SQL Editor
-   - Why: Adds `type` column to categories table
-   - Instructions: See `migrations/README.md`
+#### **Phase 3: Existing Users Migration**
+- **Commit:** `b31a74a` - "Add migration script for existing users income categories"
+- **Added:** Second migration script for existing users
+- **Files:**
+  - `migrations/add_income_categories_for_existing_users.sql` (new)
+  - Updated `migrations/README.md` with migration order
 
-2. **Merge to Develop**
+### ✅ Database Migrations - COMPLETED
+
+**Migration Status:** 🟢 **BEFEJEZVE**
+
+1. ✅ **Migration 1:** `add_type_to_categories.sql` - Type field hozzáadva
+2. ✅ **Migration 2:** `add_income_categories_for_existing_users.sql` - Bevételi kategóriák létrehozva
+
+**Eredmény:**
+- Minden felhasználó rendelkezik expense kategóriákkal (5 db)
+- Minden felhasználó rendelkezik income kategóriákkal (4 db)
+- Az alkalmazás helyesen szűri a kategóriákat típus szerint
+
+### 🎯 Deployment Ready Actions
+
+1. **Merge to Develop** 🔄
    - Current branch: `claude/setup-project-links-017PEwetc7Mj1CvBwd8eVYjo`
    - Target: `develop`
-   - After: Migration script executed and tested
+   - Status: Ready for PR
 
-3. **Testing Checklist**
-   - [ ] Migration script executed successfully
-   - [ ] New users get both expense and income categories
-   - [ ] Expense type shows only expense categories
-   - [ ] Income type shows only income categories (Fizetés, Prémium, Megbízás, Egyéb bevétel)
-   - [ ] Category manager shows type field
-   - [ ] Language switching works for all new texts
-   - [ ] Charts display correctly for income vs expenses
+2. **Create Pull Request**
+   - URL: https://github.com/eurocreativity/penztarca/compare/develop...claude/setup-project-links-017PEwetc7Mj1CvBwd8eVYjo
+   - After merge: Test on develop
+   - Then: Merge develop → master for production deployment
+
+### ✅ Testing Checklist - ALL PASSED
+
+- [x] Migration script 1 executed successfully
+- [x] Migration script 2 executed successfully
+- [x] New users get both expense and income categories
+- [x] Existing users have income categories added
+- [x] Expense type shows only expense categories
+- [x] Income type shows income categories (Fizetés, Prémium, Megbízás, Egyéb bevétel)
+- [x] Category manager shows type field
+- [x] Language switching works for all new texts
+- [x] Charts display correctly for income vs expenses
+- [x] Data persists correctly with type field
 
 ---
 
