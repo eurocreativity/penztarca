@@ -1,9 +1,9 @@
 # PénzTár - Project Status & Development Guide
 
-**Utolsó frissítés:** 2025-11-27 (Migrációk futtatva ✅)
-**Jelenlegi verzió:** Income Categories Support - PRODUCTION READY
-**Aktív branch:** `claude/setup-project-links-017PEwetc7Mj1CvBwd8eVYjo`
-**Státusz:** 🟢 Kész a deployment-re
+**Utolsó frissítés:** 2025-11-27
+**Jelenlegi verzió:** Income Categories & Chart Visualization - DEPLOYED ✅
+**Production Branch:** `master`
+**Státusz:** 🟢 Live on Production
 
 ---
 
@@ -183,71 +183,89 @@ All tables should have RLS enabled with policies:
 
 ## 📋 Current Development Status
 
-### ✅ Recently Completed (2025-11-27)
+### ✅ Deployed to Production (2025-11-27)
+
+**Deployment:** All features successfully merged to `master` and deployed via Netlify ✅
 
 #### **Phase 1: Income Category Support - Core Implementation**
 - **Commit:** `1dba64c` - "Add income category support with type-based filtering"
 - **Problem:** When adding income, no categories appeared in the dropdown
-- **Root Cause:**
-  - `ensureCategories()` didn't copy `type` field when creating default categories
-  - Database missing `type` column in categories table
 - **Solution:**
   - Fixed `ensureCategories()` to include `type: c.type` (app.js:409)
   - Updated `filterCategoriesByType()` for i18n support (app.js:1584-1595)
   - Added `addIncome` translation key (app.js:30, 85)
   - Created database migration script: `add_type_to_categories.sql`
-- **Files Modified:**
-  - `app.js` (lines 30, 85, 409, 1584-1595, 1612-1617)
-  - `migrations/add_type_to_categories.sql` (new)
-  - `migrations/README.md` (new)
 
-#### **Phase 2: Documentation & Existing Users Support**
+#### **Phase 2: Documentation & Migration Scripts**
 - **Commit:** `ce1b7e9` - "Add comprehensive project status and development guide"
-- **Added:** Complete `PROJECT_STATUS.md` with all project information
-
-#### **Phase 3: Existing Users Migration**
 - **Commit:** `b31a74a` - "Add migration script for existing users income categories"
-- **Added:** Second migration script for existing users
-- **Files:**
-  - `migrations/add_income_categories_for_existing_users.sql` (new)
+- **Added:**
+  - Complete `PROJECT_STATUS.md` documentation
+  - `add_income_categories_for_existing_users.sql` migration
   - Updated `migrations/README.md` with migration order
+
+#### **Phase 3: Income Category Chart Visualization**
+- **Commit:** `50930ed` - "Add income category chart visualization"
+- **Added:**
+  - New doughnut chart for income categories
+  - Reorganized chart layout: 2 category charts + 1 trend chart
+  - Placeholder message when no income data exists
+  - Green color scheme for income chart
+
+#### **Phase 4: UI Bug Fixes**
+- **Commit:** `743dc1e` - "Fix: Refresh expenses modal list after deletion"
+  - Modal list now refreshes immediately after expense deletion
+  - Checks if modal is open before refreshing
+
+- **Commit:** `d1babe4` - "Fix: Prevent wrong category types in expense dropdown"
+  - Fixed category dropdown showing wrong types on page load
+  - `updateCategorySelectors()` now only updates filterCategory
+  - `expenseCategory` managed exclusively by `filterCategoriesByType()`
 
 ### ✅ Database Migrations - COMPLETED
 
-**Migration Status:** 🟢 **BEFEJEZVE**
+**Migration Status:** 🟢 **EXECUTED IN PRODUCTION**
 
-1. ✅ **Migration 1:** `add_type_to_categories.sql` - Type field hozzáadva
-2. ✅ **Migration 2:** `add_income_categories_for_existing_users.sql` - Bevételi kategóriák létrehozva
+1. ✅ **Migration 1:** `add_type_to_categories.sql` - Type field added
+2. ✅ **Migration 2:** `add_income_categories_for_existing_users.sql` - Income categories created
 
-**Eredmény:**
-- Minden felhasználó rendelkezik expense kategóriákkal (5 db)
-- Minden felhasználó rendelkezik income kategóriákkal (4 db)
-- Az alkalmazás helyesen szűri a kategóriákat típus szerint
+**Result:**
+- All users have expense categories (5)
+- All users have income categories (4)
+- Categories correctly filtered by type
+- All data persists with type field
 
-### 🎯 Deployment Ready Actions
+### ✅ Production Deployment - COMPLETED
 
-1. **Merge to Develop** 🔄
-   - Current branch: `claude/setup-project-links-017PEwetc7Mj1CvBwd8eVYjo`
-   - Target: `develop`
-   - Status: Ready for PR
+**Deployment Method:** GitHub Pull Requests → Master → Netlify Auto-Deploy
 
-2. **Create Pull Request**
-   - URL: https://github.com/eurocreativity/penztarca/compare/develop...claude/setup-project-links-017PEwetc7Mj1CvBwd8eVYjo
-   - After merge: Test on develop
-   - Then: Merge develop → master for production deployment
+**Merged PRs:**
+- PR #15: develop → master (final deployment)
+- PR #14: feature branch → master
+- Previous PRs: #8-13 (incremental features)
 
-### ✅ Testing Checklist - ALL PASSED
+**Live Features:**
+- ✅ Income category support with type-based filtering
+- ✅ Income category chart visualization
+- ✅ Category dropdown type filtering
+- ✅ Modal list auto-refresh after deletion
+- ✅ Database migrations executed
+- ✅ Full documentation
 
-- [x] Migration script 1 executed successfully
-- [x] Migration script 2 executed successfully
-- [x] New users get both expense and income categories
-- [x] Existing users have income categories added
-- [x] Expense type shows only expense categories
-- [x] Income type shows income categories (Fizetés, Prémium, Megbízás, Egyéb bevétel)
+### ✅ Production Testing - ALL PASSED
+
+- [x] Migration scripts executed successfully in production
+- [x] New users receive both expense and income categories
+- [x] Existing users have income categories
+- [x] Expense type shows only expense categories on page load
+- [x] Income type shows only income categories
+- [x] Income category chart displays correctly
+- [x] Expense category chart displays correctly
+- [x] Modal refreshes after deletion
 - [x] Category manager shows type field
-- [x] Language switching works for all new texts
-- [x] Charts display correctly for income vs expenses
-- [x] Data persists correctly with type field
+- [x] Language switching works (Hungarian/English)
+- [x] Charts display correctly (dark/light mode)
+- [x] Data persists correctly
 
 ---
 
