@@ -41,6 +41,13 @@ class FinanceApp {
                 categoryBudgets: 'Kategóriánkénti Költségkeret',
                 noBudgetSet: 'Nincs limit beállítva',
                 ofLimit: 'a limitből',
+                forecastTitle: 'Előrejelzés',
+                forecastGood: 'Jó ütemben haladsz!',
+                forecastWarning: 'Vigyázz, közel vagy a limithez!',
+                forecastDanger: 'Túlköltés várható!',
+                forecastExpected: 'Várható költés a hónap végére:',
+                forecastRemaining: 'Várható maradék:',
+                daysLeft: 'Hátralévő napok:',
                 allCategories: 'Minden kategória',
                 export: 'Export',
                 import: 'Import',
@@ -104,6 +111,13 @@ class FinanceApp {
                 categoryBudgets: 'Category Budgets',
                 noBudgetSet: 'No limit set',
                 ofLimit: 'of limit',
+                forecastTitle: 'Forecast',
+                forecastGood: 'On track!',
+                forecastWarning: 'Getting close to budget!',
+                forecastDanger: 'Overspending expected!',
+                forecastExpected: 'Expected spending by month end:',
+                forecastRemaining: 'Expected remaining:',
+                daysLeft: 'Days left:',
                 allCategories: 'All categories',
                 export: 'Export',
                 import: 'Import',
@@ -1025,6 +1039,7 @@ class FinanceApp {
     updateUI() {
         this.calculateBalance();
         this.updateBudgetDisplay();
+        this.updateSpendingForecast();
         this.updateQuickStats();
         this.updateRecentExpenses();
         this.updateCategoryBudgets();
@@ -1267,6 +1282,90 @@ class FinanceApp {
                 </div>
             `;
         }).join('');
+    }
+
+    updateSpendingForecast() {
+        const forecastDiv = document.getElementById('spendingForecast');
+
+        // Only show if budget is set
+        if (!this.budget || this.budget <= 0) {
+            forecastDiv.innerHTML = '';
+            return;
+        }
+
+        const now = new Date();
+        const currentMonth = now.toISOString().slice(0, 7);
+        const currentDay = now.getDate();
+
+        // Get days in current month
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const daysRemaining = daysInMonth - currentDay;
+
+        // Calculate monthly expenses so far
+        const monthlyExpenses = this.expenses
+            .filter(expense =>
+                expense.date.startsWith(currentMonth) &&
+                (expense.type === 'expense' || !expense.type)
+            )
+            .reduce((sum, expense) => sum + expense.amount, 0);
+
+        // Calculate daily average
+        const dailyAverage = monthlyExpenses / currentDay;
+
+        // Forecast total spending by month end
+        const forecastedTotal = monthlyExpenses + (dailyAverage * daysRemaining);
+        const forecastedRemaining = this.budget - forecastedTotal;
+        const forecastPercentage = (forecastedTotal / this.budget) * 100;
+
+        // Determine alert level
+        let alertClass, iconClass, icon, message;
+        if (forecastPercentage >= 100) {
+            alertClass = 'bg-red-50 dark:bg-red-900/20 border-red-500';
+            iconClass = 'text-red-600 dark:text-red-400';
+            icon = 'fas fa-exclamation-triangle';
+            message = this.getText('forecastDanger');
+        } else if (forecastPercentage >= 85) {
+            alertClass = 'bg-orange-50 dark:bg-orange-900/20 border-orange-500';
+            iconClass = 'text-orange-600 dark:text-orange-400';
+            icon = 'fas fa-exclamation-circle';
+            message = this.getText('forecastWarning');
+        } else {
+            alertClass = 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500';
+            iconClass = 'text-emerald-600 dark:text-emerald-400';
+            icon = 'fas fa-check-circle';
+            message = this.getText('forecastGood');
+        }
+
+        forecastDiv.innerHTML = `
+            <div class="${alertClass} border-l-4 rounded-xl p-4 shadow-md">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <i class="${icon} ${iconClass} text-2xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-900 dark:text-white mb-2">
+                            <i class="fas fa-crystal-ball mr-2"></i>${this.getText('forecastTitle')}: ${message}
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-600 dark:text-gray-400">${this.getText('forecastExpected')}</p>
+                                <p class="font-bold ${iconClass} text-lg">${this.formatCurrency(forecastedTotal)}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 dark:text-gray-400">${this.getText('forecastRemaining')}</p>
+                                <p class="font-bold ${iconClass} text-lg">${forecastedRemaining >= 0 ? '+' : ''}${this.formatCurrency(forecastedRemaining)}</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                ${this.getText('daysLeft')} <span class="font-semibold">${daysRemaining}</span> •
+                                Napi átlag: <span class="font-semibold">${this.formatCurrency(dailyAverage)}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     updateCategoryBudgets() {
