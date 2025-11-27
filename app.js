@@ -129,29 +129,48 @@ class FinanceApp {
         try {
             console.log('Initializing app...');
 
-            // Wait a moment for Supabase to fully initialize
-            await new Promise(resolve => setTimeout(resolve, 100));
+            // Wait longer for Supabase to fully initialize and session to be available
+            await new Promise(resolve => setTimeout(resolve, 300));
 
-            // Check authentication
-            const { data: { session }, error: authError } = await window.supabaseClient.auth.getSession();
+            // Try to get session with retry
+            let session = null;
+            let authError = null;
+            let retryCount = 0;
+            const maxRetries = 3;
 
-            console.log('Auth check result:', {
-                hasSession: !!session,
-                userId: session?.user?.id,
-                error: authError
-            });
+            while (!session && retryCount < maxRetries) {
+                const result = await window.supabaseClient.auth.getSession();
+                session = result.data?.session;
+                authError = result.error;
+
+                console.log(`Auth check attempt ${retryCount + 1}/${maxRetries}:`, {
+                    hasSession: !!session,
+                    userId: session?.user?.id,
+                    error: authError,
+                    localStorage: localStorage.getItem('supabase.auth.token') ? 'exists' : 'missing'
+                });
+
+                if (!session && retryCount < maxRetries - 1) {
+                    console.log('Session not found, waiting before retry...');
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
+                retryCount++;
+            }
 
             if (authError) {
-                console.error('Auth error:', authError);
+                console.error('Auth error after retries:', authError);
                 window.location.href = 'auth.html';
                 return;
             }
 
             if (!session) {
-                console.log('No authenticated session, redirecting to auth.html...');
+                console.log('No authenticated session after retries, redirecting to auth.html...');
                 window.location.href = 'auth.html';
                 return;
             }
+
+            console.log('✅ Session verified successfully!');
 
             // Get user data
             const { data: profile, error: profileError } = await window.supabaseClient
@@ -1512,6 +1531,38 @@ class FinanceApp {
         } catch {
             return defaultValue;
         }
+    }
+
+    // Filter category dropdown based on transaction type
+    filterCategoriesByType(type) {
+        const select = document.getElementById('expenseCategory');
+        if (!select) return;
+
+        // Clear current options except the first (placeholder)
+        select.innerHTML = '<option value="">Válassz kategóriát</option>';
+
+        // Filter and add categories based on type
+        const filteredCategories = this.categories.filter(cat => cat.type === type || !cat.type);
+
+        filteredCategories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id;
+            option.textContent = cat.name;
+            select.appendChild(option);
+        });
+    }
+
+    // Setup transaction type listener
+    setupTransactionTypeListener() {
+        const typeRadios = document.getElementsByName('transactionType');
+        typeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.filterCategoriesByType(e.target.value);
+            });
+        });
+
+        // Initialize with default type (expense)
+        this.filterCategoriesByType('expense');
     }
 }
 
