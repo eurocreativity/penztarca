@@ -38,6 +38,9 @@ class FinanceApp {
                 topExpenses: 'Top 5 Legnagyobb Kiadás',
                 currentMonth: 'Aktuális hónap',
                 noTopExpenses: 'Még nincsenek kiadások ebben a hónapban',
+                categoryBudgets: 'Kategóriánkénti Költségkeret',
+                noBudgetSet: 'Nincs limit beállítva',
+                ofLimit: 'a limitből',
                 allCategories: 'Minden kategória',
                 export: 'Export',
                 import: 'Import',
@@ -67,6 +70,7 @@ class FinanceApp {
                 categoryName: 'Kategória neve',
                 categoryColor: 'Szín',
                 categoryIcon: 'Ikon',
+                categoryBudgetLimit: 'Havi költségkeret (opcionális)',
                 saveCategory: 'Mentés',
                 deleteCategory: 'Törlés',
                 cancelEdit: 'Mégse'
@@ -97,6 +101,9 @@ class FinanceApp {
                 topExpenses: 'Top 5 Biggest Expenses',
                 currentMonth: 'Current Month',
                 noTopExpenses: 'No expenses this month yet',
+                categoryBudgets: 'Category Budgets',
+                noBudgetSet: 'No limit set',
+                ofLimit: 'of limit',
                 allCategories: 'All categories',
                 export: 'Export',
                 import: 'Import',
@@ -126,6 +133,7 @@ class FinanceApp {
                 categoryName: 'Category Name',
                 categoryColor: 'Color',
                 categoryIcon: 'Icon',
+                categoryBudgetLimit: 'Monthly Budget Limit (optional)',
                 saveCategory: 'Save',
                 deleteCategory: 'Delete',
                 cancelEdit: 'Cancel'
@@ -589,6 +597,13 @@ class FinanceApp {
                                     </label>
                                 </div>
                             </div>
+                            <div id="budgetLimitField">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <span data-lang="categoryBudgetLimit">Havi költségkeret (opcionális)</span>
+                                </label>
+                                <input type="number" id="categoryBudgetInput" placeholder="0" class="w-full px-3 py-2 border border-gray-300 dark:border-stone-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-stone-600 dark:text-white">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hagyd üresen ha nincs limit. Csak kiadás típusú kategóriákhoz.</p>
+                            </div>
                             <div class="flex space-x-2">
                                 <button id="saveCategoryBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
                                     <span data-lang="saveCategory">${this.getText('saveCategory')}</span>
@@ -672,6 +687,7 @@ class FinanceApp {
             document.getElementById('categoryNameInput').value = category.name;
             document.getElementById('categoryColorInput').value = category.color;
             document.getElementById('categoryIconInput').value = category.icon;
+            document.getElementById('categoryBudgetInput').value = category.budget_limit || '';
             // Set type radio buttons
             const typeRadios = document.getElementsByName('categoryType');
             typeRadios.forEach(radio => {
@@ -682,6 +698,7 @@ class FinanceApp {
             document.getElementById('categoryNameInput').value = '';
             document.getElementById('categoryColorInput').value = '#f59e0b';
             document.getElementById('categoryIconInput').value = 'fas fa-ellipsis-h';
+            document.getElementById('categoryBudgetInput').value = '';
             // Default to expense type
             const typeRadios = document.getElementsByName('categoryType');
             typeRadios.forEach(radio => {
@@ -702,6 +719,7 @@ class FinanceApp {
         const color = document.getElementById('categoryColorInput').value;
         const icon = document.getElementById('categoryIconInput').value;
         const type = document.querySelector('input[name="categoryType"]:checked').value;
+        const budgetLimit = document.getElementById('categoryBudgetInput').value;
 
         if (!name) {
             alert('Kérlek add meg a kategória nevét!');
@@ -714,7 +732,8 @@ class FinanceApp {
                 name,
                 color,
                 icon,
-                type
+                type,
+                budget_limit: budgetLimit && budgetLimit > 0 ? parseFloat(budgetLimit) : null
             };
 
             if (editingId) {
@@ -1008,6 +1027,7 @@ class FinanceApp {
         this.updateBudgetDisplay();
         this.updateQuickStats();
         this.updateRecentExpenses();
+        this.updateCategoryBudgets();
         this.updateTopExpenses();
         this.updateCharts();
         this.updateCategorySelectors();
@@ -1242,6 +1262,94 @@ class FinanceApp {
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    updateCategoryBudgets() {
+        const budgetsList = document.getElementById('categoryBudgetsList');
+        const currentMonth = new Date().toISOString().slice(0, 7);
+
+        // Filter expense categories with budget limits
+        const categoriesWithBudget = this.categories.filter(cat =>
+            (cat.type === 'expense' || !cat.type) && cat.budget_limit && cat.budget_limit > 0
+        );
+
+        if (categoriesWithBudget.length === 0) {
+            budgetsList.innerHTML = `
+                <div class="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
+                    <i class="fas fa-wallet text-4xl mb-3 opacity-50"></i>
+                    <p>${this.getText('noBudgetSet')}</p>
+                    <p class="text-sm mt-2">Állíts be költségkeretet a kategóriákhoz a Kategóriák menüben!</p>
+                </div>
+            `;
+            return;
+        }
+
+        budgetsList.innerHTML = categoriesWithBudget.map(category => {
+            // Calculate spending for this category this month
+            const spent = this.expenses
+                .filter(expense =>
+                    expense.date.startsWith(currentMonth) &&
+                    (expense.type === 'expense' || !expense.type) &&
+                    expense.category == category.id
+                )
+                .reduce((sum, expense) => sum + expense.amount, 0);
+
+            const limit = category.budget_limit;
+            const percentage = (spent / limit) * 100;
+
+            // Color coding
+            let colorClass, bgClass, borderClass;
+            if (percentage >= 100) {
+                colorClass = 'text-red-600 dark:text-red-400';
+                bgClass = 'bg-red-500';
+                borderClass = 'border-red-500';
+            } else if (percentage >= 75) {
+                colorClass = 'text-orange-600 dark:text-orange-400';
+                bgClass = 'bg-orange-500';
+                borderClass = 'border-orange-500';
+            } else if (percentage >= 50) {
+                colorClass = 'text-yellow-600 dark:text-yellow-400';
+                bgClass = 'bg-yellow-500';
+                borderClass = 'border-yellow-500';
+            } else {
+                colorClass = 'text-emerald-600 dark:text-emerald-400';
+                bgClass = 'bg-emerald-500';
+                borderClass = 'border-emerald-500';
+            }
+
+            return `
+                <div class="p-4 bg-gray-50 dark:bg-stone-700 rounded-xl border-l-4 ${borderClass} hover:shadow-md transition-all duration-300">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: ${category.color}20">
+                                <i class="${category.icon} text-sm" style="color: ${category.color}"></i>
+                            </div>
+                            <span class="font-semibold text-gray-900 dark:text-white">${category.name}</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-gray-200 dark:bg-stone-600 rounded-full h-3 overflow-hidden">
+                            <div class="${bgClass} h-full rounded-full transition-all duration-500" style="width: ${Math.min(percentage, 100)}%"></div>
+                        </div>
+
+                        <!-- Amounts -->
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="font-bold ${colorClass}">${this.formatCurrency(spent)}</span>
+                            <span class="text-gray-500 dark:text-gray-400">${this.formatCurrency(limit)}</span>
+                        </div>
+
+                        <!-- Percentage -->
+                        <div class="text-center">
+                            <span class="text-xs font-semibold ${colorClass}">
+                                ${percentage.toFixed(1)}% ${this.getText('ofLimit')}
+                            </span>
                         </div>
                     </div>
                 </div>
