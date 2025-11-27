@@ -373,6 +373,7 @@ class FinanceApp {
                     category: e.category_id,
                     description: e.description,
                     date: e.date,
+                    type: e.type || 'expense', // Default to expense if not set
                     timestamp: e.created_at
                 }));
 
@@ -853,11 +854,13 @@ class FinanceApp {
         const categorySelect = document.getElementById('expenseCategory');
         const descriptionInput = document.getElementById('expenseDescription');
         const dateInput = document.getElementById('expenseDate');
+        const typeRadio = document.querySelector('input[name="transactionType"]:checked');
 
         const amount = parseFloat(amountInput.value);
         const categoryId = parseInt(categorySelect.value); // Ensure numeric ID
         const description = descriptionInput.value.trim();
         const date = dateInput.value;
+        const type = typeRadio?.value || 'expense'; // Get transaction type
 
         // Validation
         if (isNaN(amount) || amount <= 0) {
@@ -886,7 +889,8 @@ class FinanceApp {
                 amount: amount,
                 category_id: categoryId,
                 description: description,
-                date: date
+                date: date,
+                type: type // Add type field
             };
 
             if (this.currentEditId) {
@@ -906,7 +910,8 @@ class FinanceApp {
                         amount,
                         category: categoryId,
                         description,
-                        date
+                        date,
+                        type
                     };
                 }
                 this.currentEditId = null;
@@ -927,6 +932,7 @@ class FinanceApp {
                     category: data.category_id,
                     description: data.description,
                     date: data.date,
+                    type: data.type,
                     timestamp: data.created_at
                 });
             }
@@ -1060,6 +1066,7 @@ class FinanceApp {
         const today = new Date().toISOString().slice(0, 10);
         const currentMonth = new Date().toISOString().slice(0, 7);
 
+        // Calculate today's expenses
         const todayExpenses = this.expenses
             .filter(expense =>
                 expense.date === today &&
@@ -1067,6 +1074,15 @@ class FinanceApp {
             )
             .reduce((sum, expense) => sum + expense.amount, 0);
 
+        // Calculate today's income
+        const todayIncome = this.expenses
+            .filter(expense =>
+                expense.date === today &&
+                expense.type === 'income'
+            )
+            .reduce((sum, expense) => sum + expense.amount, 0);
+
+        // Calculate monthly expenses
         const monthlyExpenses = this.expenses
             .filter(expense =>
                 expense.date.startsWith(currentMonth) &&
@@ -1074,8 +1090,34 @@ class FinanceApp {
             )
             .reduce((sum, expense) => sum + expense.amount, 0);
 
+        // Calculate monthly income
+        const monthlyIncome = this.expenses
+            .filter(expense =>
+                expense.date.startsWith(currentMonth) &&
+                expense.type === 'income'
+            )
+            .reduce((sum, expense) => sum + expense.amount, 0);
+
+        // Calculate net balance
+        const netBalance = monthlyIncome - monthlyExpenses;
+
+        // Update display
         document.getElementById('todayExpenses').textContent = this.formatCurrency(todayExpenses);
+        document.getElementById('todayIncome').textContent = this.formatCurrency(todayIncome);
         document.getElementById('monthlyExpenses').textContent = this.formatCurrency(monthlyExpenses);
+        document.getElementById('monthlyIncome').textContent = this.formatCurrency(monthlyIncome);
+
+        const netBalanceElement = document.getElementById('netBalance');
+        netBalanceElement.textContent = this.formatCurrency(Math.abs(netBalance));
+
+        // Color code the net balance
+        if (netBalance > 0) {
+            netBalanceElement.className = 'text-2xl font-bold text-emerald-600 dark:text-emerald-400';
+        } else if (netBalance < 0) {
+            netBalanceElement.className = 'text-2xl font-bold text-warm-600 dark:text-warm-400';
+        } else {
+            netBalanceElement.className = 'text-2xl font-bold text-blue-700 dark:text-blue-300';
+        }
     }
 
     updateRecentExpenses() {
@@ -1555,9 +1597,25 @@ class FinanceApp {
     // Setup transaction type listener
     setupTransactionTypeListener() {
         const typeRadios = document.getElementsByName('transactionType');
+        const submitButton = document.querySelector('#expenseForm button[type="submit"] span[data-lang="addExpense"]');
+
         typeRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
-                this.filterCategoriesByType(e.target.value);
+                const type = e.target.value;
+
+                // Filter categories based on type
+                this.filterCategoriesByType(type);
+
+                // Change submit button text and icon
+                if (submitButton) {
+                    if (type === 'income') {
+                        submitButton.textContent = 'Bevétel Hozzáadása';
+                        submitButton.setAttribute('data-lang', 'addIncome');
+                    } else {
+                        submitButton.textContent = 'Kiadás Hozzáadása';
+                        submitButton.setAttribute('data-lang', 'addExpense');
+                    }
+                }
             });
         });
 
