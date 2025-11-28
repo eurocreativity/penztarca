@@ -137,40 +137,31 @@ class FinanceApp {
         try {
             console.log('Initializing app...');
 
-            // Wait longer for Supabase to fully initialize and session to be available
-            await new Promise(resolve => setTimeout(resolve, 300));
+            // Wait for Supabase to initialize and restore session
+            console.log('Waiting for session restoration...');
 
-            // Try to get session with retry
-            let session = null;
-            let authError = null;
-            let retryCount = 0;
-            const maxRetries = 3;
+            const session = await new Promise((resolve) => {
+                // Set a timeout to fallback to getSession
+                const timeoutId = setTimeout(async () => {
+                    console.log('Timeout waiting for auth state change, checking getSession...');
+                    const { data } = await window.supabaseClient.auth.getSession();
+                    resolve(data.session);
+                }, 2000); // 2 seconds timeout
 
-            while (!session && retryCount < maxRetries) {
-                const result = await window.supabaseClient.auth.getSession();
-                session = result.data?.session;
-                authError = result.error;
-
-                console.log(`Auth check attempt ${retryCount + 1}/${maxRetries}:`, {
-                    hasSession: !!session,
-                    userId: session?.user?.id,
-                    error: authError,
-                    localStorage: localStorage.getItem('supabase.auth.token') ? 'exists' : 'missing'
+                // Listen for auth state changes
+                const { data: { subscription } } = window.supabaseClient.auth.onAuthStateChange((event, session) => {
+                    console.log('Auth state change during init:', event);
+                    if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                        clearTimeout(timeoutId);
+                        resolve(session);
+                        subscription.unsubscribe();
+                    } else if (event === 'SIGNED_OUT') {
+                        clearTimeout(timeoutId);
+                        resolve(null);
+                        subscription.unsubscribe();
+                    }
                 });
-
-                if (!session && retryCount < maxRetries - 1) {
-                    console.log('Session not found, waiting before retry...');
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
-
-                retryCount++;
-            }
-
-            if (authError) {
-                console.error('Auth error after retries:', authError);
-                window.location.href = 'auth.html';
-                return;
-            }
+            });
 
             if (!session) {
                 console.log('No authenticated session after retries, redirecting to auth.html...');
