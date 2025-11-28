@@ -15,12 +15,20 @@ class AuthManager {
 
     init() {
         console.log('AuthManager initializing...');
-        this.setupEventListeners();
+
+        // Only setup form listeners if we're on the auth page
+        const isAuthPage = window.location.pathname.includes('auth.html') ||
+                          document.getElementById('loginFormElement');
+
+        if (isAuthPage) {
+            this.setupEventListeners();
+        }
+
         this.checkAuthStatus();
     }
 
     setupEventListeners() {
-        console.log('Setting up event listeners...');
+        console.log('Setting up auth page event listeners...');
 
         // Form toggle buttons
         const showRegisterBtn = document.getElementById('showRegisterBtn');
@@ -391,9 +399,34 @@ class AuthManager {
 
             console.log('Login successful:', data);
             this.showSuccess('loginSuccess', 'Sikeres bejelentkezés!');
-            setTimeout(() => {
+
+            // Wait longer for session to be fully persisted
+            console.log('Waiting for session to persist...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Verify session exists with retry
+            let verifySession = null;
+            let retryCount = 0;
+            while (!verifySession && retryCount < 3) {
+                const result = await window.supabaseClient.auth.getSession();
+                verifySession = result.data?.session;
+                console.log(`Session verification attempt ${retryCount + 1}/3:`, {
+                    hasSession: !!verifySession,
+                    userId: verifySession?.user?.id
+                });
+                if (!verifySession && retryCount < 2) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                retryCount++;
+            }
+
+            if (verifySession) {
+                console.log('✅ Session verified, redirecting to index.html');
                 window.location.href = 'index.html';
-            }, 1000);
+            } else {
+                console.error('❌ Session not found after login and retries');
+                this.showError('loginError', 'Sikertelen bejelentkezés. Kérlek próbáld újra vagy töröld a böngésző cache-t.');
+            }
         } catch (error) {
             console.error('Unexpected error during login:', error);
             this.showError('loginError', 'Váratlan hiba történt. Kérlek, próbáld újra később.');
