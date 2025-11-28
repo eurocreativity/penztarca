@@ -1,12 +1,3 @@
-# PénzTár - Project Status & Development Guide
-
-**Utolsó frissítés:** 2025-11-27 (Migrációk futtatva ✅)
-**Jelenlegi verzió:** Income Categories Support - PRODUCTION READY
-**Aktív branch:** `claude/setup-project-links-017PEwetc7Mj1CvBwd8eVYjo`
-**Státusz:** 🟢 Kész a deployment-re
-
----
-
 ## 📍 Projekt Elérések
 
 ### Production & Deployment
@@ -548,7 +539,7 @@ const filteredCategories = this.categories.filter(
 4. Deploy to production
 
 ### Short-term Enhancements
-- [ ] Add CSV export/import
+- [x] Add CSV export/import
 - [ ] Transaction search and advanced filtering
 - [ ] Recurring transactions
 - [ ] Budget categories (separate budgets per category)
