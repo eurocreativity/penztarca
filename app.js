@@ -37,7 +37,9 @@ class FinanceApp {
                 allExpenses: 'Összes Kiadás',
                 allCategories: 'Minden kategória',
                 export: 'Export',
+                exportCsv: 'CSV Export',
                 import: 'Import',
+                importCsv: 'CSV Import',
                 selectCategory: 'Válassz kategóriát',
                 noExpenses: 'Még nincsenek kiadások',
                 noFilteredExpenses: 'Nincsenek kiadások a megadott szűrőkkel',
@@ -93,7 +95,9 @@ class FinanceApp {
                 allExpenses: 'All Expenses',
                 allCategories: 'All categories',
                 export: 'Export',
+                exportCsv: 'CSV Export',
                 import: 'Import',
+                importCsv: 'CSV Import',
                 selectCategory: 'Select category',
                 noExpenses: 'No expenses yet',
                 noFilteredExpenses: 'No expenses match the filters',
@@ -485,6 +489,14 @@ class FinanceApp {
 
         document.getElementById('importBtn').addEventListener('change', (e) => {
             this.importData(e);
+        });
+
+        document.getElementById('exportCsvBtn').addEventListener('click', () => {
+            this.exportToCSV();
+        });
+
+        document.getElementById('importCsvBtn').addEventListener('change', (e) => {
+            this.importFromCSV(e);
         });
 
         // Show all expenses
@@ -1564,7 +1576,7 @@ class FinanceApp {
         }
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             try {
                 const data = JSON.parse(e.target.result);
 
@@ -1574,17 +1586,160 @@ class FinanceApp {
                 }
 
                 if (confirm(this.getText('importOverwrite'))) {
-                    this.expenses = data.expenses;
-                    this.budget = data.budget || 0;
-                    if (data.categories) {
-                        this.categories = data.categories;
-                    }
+                    // Delete existing expenses
+                    const { error: deleteError } = await window.supabaseClient
+                        .from('expenses')
+                        .delete()
+                        .eq('user_id', this.currentUser.id);
 
-                    this.saveUserData();
+                    if (deleteError) throw deleteError;
+
+                    // Prepare new expenses
+                    const newExpenses = data.expenses.map(exp => ({
+                        user_id: this.currentUser.id,
+                        amount: exp.amount,
+                        category_id: exp.category,
+                        description: exp.description,
+                        date: exp.date,
+                        type: exp.type || 'expense'
+                    }));
+
+                    // Insert new expenses
+                    const { data: insertedExpenses, error: insertError } = await window.supabaseClient
+                        .from('expenses')
+                        .insert(newExpenses)
+                        .select();
+
+                    if (insertError) throw insertError;
+
+                    // Update local state
+                    this.expenses = insertedExpenses.map(e => ({
+                        id: e.id,
+                        amount: e.amount,
+                        category: e.category_id,
+                        description: e.description,
+                        date: e.date,
+                        type: e.type,
+                        timestamp: e.created_at
+                    }));
+
                     this.updateUI();
                     alert(this.getText('importSuccess'));
                 }
             } catch (error) {
+                console.error('Import error:', error);
+                alert(this.getText('importError'));
+            }
+        };
+
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    exportToCSV() {
+        // Header
+        const headers = ['Date', 'Amount', 'Type', 'Category', 'Description'];
+
+        // Rows
+        const rows = this.expenses.map(expense => {
+            const category = this.categories.find(c => c.id === expense.category);
+            return [
+                expense.date,
+                expense.amount,
+                expense.type || 'expense',
+                category ? category.name : 'Unknown',
+                `"${(expense.description || '').replace(/"/g, '""')}"` // Escape quotes
+            ].join(',');
+        });
+
+        // Combine
+        const csvContent = [headers.join(','), ...rows].join('\n');
+
+        // Download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `penztarca_export_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    importFromCSV(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (!file.name.endsWith('.csv')) {
+            alert(this.getText('invalidFileFormat'));
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const text = e.target.result;
+                const lines = text.split('\n');
+
+                // Skip header
+                const dataLines = lines.slice(1).filter(line => line.trim() !== '');
+
+                const newExpenses = [];
+
+                for (const line of dataLines) {
+                    // Simple CSV parser (handles quotes)
+                    const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+                    const values = matches.map(val => val.replace(/^"|"$/g, '').replace(/""/g, '"'));
+
+                    if (values.length >= 5) {
+                        const [date, amountStr, type, categoryName, description] = values;
+
+                        // Find category ID by name
+                        const category = this.categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase());
+                        const categoryId = category ? category.id : 'other'; // Default to 'other'
+
+                        newExpenses.push({
+                            user_id: this.currentUser.id,
+                            amount: parseFloat(amountStr),
+                            category_id: categoryId,
+                            description: description,
+                            date: date,
+                            type: type || 'expense'
+                        });
+                    }
+                }
+
+                if (newExpenses.length > 0) {
+                    if (confirm(`${newExpenses.length} tranzakció importálása. Folytatod?`)) {
+                        const { data: insertedExpenses, error } = await window.supabaseClient
+                            .from('expenses')
+                            .insert(newExpenses)
+                            .select();
+
+                        if (error) throw error;
+
+                        // Add to local state
+                        const mappedExpenses = insertedExpenses.map(e => ({
+                            id: e.id,
+                            amount: e.amount,
+                            category: e.category_id,
+                            description: e.description,
+                            date: e.date,
+                            type: e.type,
+                            timestamp: e.created_at
+                        }));
+
+                        this.expenses = [...this.expenses, ...mappedExpenses];
+                        this.updateUI();
+                        alert(this.getText('importSuccess'));
+                    }
+                } else {
+                    alert('Nem található érvényes adat a CSV fájlban.');
+                }
+
+            } catch (error) {
+                console.error('CSV Import error:', error);
                 alert(this.getText('importError'));
             }
         };
