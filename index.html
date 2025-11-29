@@ -60,269 +60,593 @@
             }
         }
     </script>
+    <style>
+        /* Firefox & Cross-browser Layout Fixes */
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Prevent canvas overflow */
+        canvas {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+
+        /* Ensure containers don't overflow */
+        .max-w-6xl {
+            max-width: 72rem;
+            width: 100%;
+        }
+
+        /* Grid fixes for consistent sizing */
+        [class*="grid"] {
+            width: 100%;
+        }
+
+        /* Card container fixes */
+        [class*="rounded-2xl"],
+        [class*="rounded-xl"] {
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        /* Prevent text overflow */
+        input[type="number"],
+        input[type="text"],
+        input[type="date"],
+        select {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        /* Flex wrap for header */
+        header .flex {
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        /* Ensure proper spacing on all browsers */
+        main {
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        /* Firefox-specific canvas sizing */
+        @-moz-document url-prefix() {
+            canvas {
+                max-width: 100%;
+                width: 100% !important;
+            }
+        }
+
+        /* Chart size constraints - Optimized for readability */
+        #categoryChart,
+        #incomeCategoryChart {
+            max-width: 100% !important;
+            max-height: 280px !important;
+            margin: 0 auto;
+        }
+
+        #trendChart {
+            max-width: 100% !important;
+            max-height: 280px !important;
+        }
+
+        /* Center chart containers */
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Responsive padding adjustments */
+        @media (min-width: 768px) {
+            .rounded-2xl {
+                padding: 1.5rem !important;
+            }
+        }
+
+        /* Optimize card spacing for fullscreen */
+        .bg-white\/90,
+        .dark\:bg-stone-800\/90 {
+            max-width: 100%;
+        }
+
+        /* Centered layout with padding on sides */
+        main {
+            max-width: 1024px;
+        }
+
+        /* Ensure widgets don't get too wide */
+        .bg-white\/90,
+        .dark\:bg-stone-800\/90,
+        .bg-gradient-to-br {
+            max-width: 100%;
+        }
+
+        /* Better spacing for components */
+        .space-y-6 > div {
+            margin-bottom: 1rem;
+        }
+
+        /* Modern Utility Classes */
+        .stat-card {
+            @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl shadow-md border hover:shadow-xl hover:scale-[1.02] transition-all duration-200 p-4;
+        }
+
+        .stat-card-expense {
+            @apply border-rose-100 dark:border-rose-900/50 bg-gradient-to-br from-rose-50/50 to-red-50/50 dark:from-rose-950/30 dark:to-red-950/30;
+        }
+
+        .stat-card-income {
+            @apply border-emerald-100 dark:border-emerald-900/50 bg-gradient-to-br from-emerald-50/50 to-green-50/50 dark:from-emerald-950/30 dark:to-green-950/30;
+        }
+
+        .stat-card-balance {
+            @apply border-blue-100 dark:border-blue-900/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/30 dark:to-indigo-950/30;
+        }
+
+        .stat-header {
+            @apply flex items-center gap-2 mb-2;
+        }
+
+        .stat-icon {
+            @apply w-9 h-9 rounded-lg flex items-center justify-center text-base;
+        }
+
+        .stat-icon-expense {
+            @apply bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400;
+        }
+
+        .stat-icon-income {
+            @apply bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400;
+        }
+
+        .stat-icon-balance {
+            @apply bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400;
+        }
+
+        .stat-label {
+            @apply text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300;
+        }
+
+        .stat-value {
+            @apply text-2xl sm:text-3xl font-bold tracking-tight;
+        }
+
+        .stat-value-expense {
+            @apply text-rose-600 dark:text-rose-400;
+        }
+
+        .stat-value-income {
+            @apply text-emerald-600 dark:text-emerald-400;
+        }
+
+        .stat-value-balance {
+            @apply text-blue-600 dark:text-blue-400;
+        }
+
+        /* Hover lift effect */
+        .hover-lift {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Animations */
+        @keyframes pulse-soft {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        .animate-pulse-soft {
+            animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-slide-up {
+            animation: slide-up 0.3s ease-out;
+        }
+
+        @keyframes scale-in {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .animate-scale-in {
+            animation: scale-in 0.2s ease-out;
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Screen reader only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+    </style>
 </head>
 
-<body class="bg-gradient-warm dark:bg-gradient-warm-dark min-h-screen transition-all duration-500">
+<body class="bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 min-h-screen transition-all duration-500">
     <!-- Header -->
     <header
-        class="bg-white/80 dark:bg-stone-900/80 backdrop-blur-lg shadow-lg border-b border-orange-200 dark:border-stone-700">
-        <div class="max-w-6xl mx-auto px-4 py-4">
+        class="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm border-b border-gray-200 dark:border-slate-700">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3">
             <div class="flex justify-between items-center">
                 <h1
                     class="text-2xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
                     <i class="fas fa-wallet mr-2 text-primary-500"></i>
                     <span data-lang="appTitle">Pénzügyi Nyilvántartó</span>
                 </h1>
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-4" id="headerActions">
                     <select id="languageSelector"
                         class="px-4 py-3 bg-orange-100 dark:bg-stone-700 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:text-white transition-all duration-300 shadow-md">
                         <option value="hu">🇭🇺 Magyar</option>
                         <option value="en">🇺🇸 English</option>
-
-    <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-6 py-12">
-        <!-- Budget Overview -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-            <div class="lg:col-span-2">
-                <div
-                    class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4" data-lang="monthlyBudget">Havi
-                        Költségvetés</h2>
-                    <div class="space-y-4">
-                        <div class="flex items-center space-x-4">
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 w-32"
-                                data-lang="monthlyFrame">Havi keret:</label>
-                            <input type="number" id="monthlyBudget" placeholder="0"
-                                class="flex-1 px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
-                            <button id="setBudgetBtn"
-                                class="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold relative">
-                                <div class="flex items-center justify-center">
-                                    <span data-lang="setBudget">Beállít</span>
-                                    <div
-                                        class="hidden absolute inset-0 bg-primary-600 rounded-xl flex items-center justify-center">
-                                        <i class="fas fa-spinner fa-spin"></i>
-                                    </div>
-                                </div>
-                            </button>
-                        </div>
-                        <div class="space-y-2">
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600 dark:text-gray-400" data-lang="spending">Költés</span>
-                                <span id="budgetProgress" class="font-medium text-gray-900 dark:text-white">0 Ft / 0
-                                    Ft</span>
-                            </div>
-                            <div class="w-full bg-orange-200/50 dark:bg-stone-700 rounded-full h-4 shadow-inner">
-                                <div id="budgetBar"
-                                    class="bg-gradient-to-r from-primary-500 to-primary-600 h-4 rounded-full transition-all duration-500 shadow-sm"
-                                    style="width: 0%"></div>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-green-600 dark:text-green-400"><span
-                                        data-lang="remaining">Maradék:</span> <span id="remainingBudget">0
-                                        Ft</span></span>
-                                <span id="budgetPercentage" class="text-gray-600 dark:text-gray-400">0%</span>
-                            </div>
-                        </div>
-                    </div>
+                    </select>
+                    <button id="darkModeToggle"
+                        class="p-3 bg-orange-100 dark:bg-stone-700 border border-orange-300 dark:border-stone-600 rounded-xl hover:bg-orange-200 dark:hover:bg-stone-600 transition-all duration-300 shadow-md">
+                        <i class="fas fa-moon dark:fa-sun text-primary-500"></i>
+                    </button>
                 </div>
             </div>
+        </div>
+    </header>
 
-            <!-- Quick Stats -->
-            <div class="space-y-6">
-                <!-- Today's Expenses -->
-                <div
-                    class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-xl transition-all duration-300">
-                    <div class="flex items-center">
-                        <div
-                            class="p-4 bg-gradient-to-br from-warm-100 to-warm-200 dark:from-warm-900/30 dark:to-warm-800/30 rounded-xl">
-                            <i class="fas fa-arrow-down text-warm-600 dark:text-warm-400"></i>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Mai kiadások</p>
-                            <p id="todayExpenses" class="text-xl font-semibold text-warm-600 dark:text-warm-400">0 Ft</p>
-                        </div>
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-5 pb-20 lg:pb-8">
+        <!-- Budget Overview - Optimized -->
+        <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg border border-amber-100 dark:border-amber-900/30 p-4 sm:p-5">
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <i class="fas fa-chart-pie text-amber-500 text-lg"></i>
+                <span data-lang="monthlyBudget">Havi Költségvetés</span>
+            </h2>
+
+            <!-- Horizontal form layout for desktop -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300 sm:w-28 flex-shrink-0" data-lang="monthlyFrame">
+                    Havi keret:
+                </label>
+                <input
+                    type="number"
+                    id="monthlyBudget"
+                    placeholder="0"
+                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:bg-slate-700/70 dark:text-white text-sm sm:text-base transition-all"
+                >
+                <button
+                    id="setBudgetBtn"
+                    class="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg font-medium text-sm sm:text-base whitespace-nowrap"
+                >
+                    <span data-lang="setBudget">Beállít</span>
+                </button>
+            </div>
+
+            <!-- Progress section with tighter spacing -->
+            <div class="space-y-2">
+                <div class="flex justify-between text-xs sm:text-sm">
+                    <span class="text-gray-600 dark:text-gray-400" data-lang="spending">Költés</span>
+                    <span id="budgetProgress" class="font-semibold text-gray-900 dark:text-white">0 Ft / 0 Ft</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-3 shadow-inner overflow-hidden">
+                    <div
+                        id="budgetBar"
+                        class="bg-gradient-to-r from-amber-500 to-orange-600 h-3 rounded-full transition-all duration-500 relative"
+                        style="width: 0%"
+                    >
+                        <div class="absolute inset-0 bg-white/20 animate-pulse-soft"></div>
                     </div>
+                </div>
+                <div class="flex justify-between text-xs sm:text-sm">
+                    <span class="text-emerald-600 dark:text-emerald-400 font-medium">
+                        <span data-lang="remaining">Maradék:</span> <span id="remainingBudget">0 Ft</span>
+                    </span>
+                    <span id="budgetPercentage" class="text-gray-600 dark:text-gray-400 font-medium">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats - Modernized -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                <!-- Today's Expenses -->
+                <div class="stat-card stat-card-expense">
+                    <div class="stat-header">
+                        <div class="stat-icon stat-icon-expense">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <p class="stat-label" data-lang="todayExpenses">Mai kiadások</p>
+                    </div>
+                    <p id="todayExpenses" class="stat-value stat-value-expense">0 Ft</p>
                 </div>
 
                 <!-- Today's Income -->
-                <div
-                    class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-xl transition-all duration-300">
-                    <div class="flex items-center">
-                        <div
-                            class="p-4 bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/30 dark:to-emerald-800/30 rounded-xl">
-                            <i class="fas fa-arrow-up text-emerald-600 dark:text-emerald-400"></i>
+                <div class="stat-card stat-card-income">
+                    <div class="stat-header">
+                        <div class="stat-icon stat-icon-income">
+                            <i class="fas fa-arrow-up"></i>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Mai bevételek</p>
-                            <p id="todayIncome" class="text-xl font-semibold text-emerald-600 dark:text-emerald-400">0 Ft</p>
-                        </div>
+                        <p class="stat-label" data-lang="todayIncome">Mai bevételek</p>
                     </div>
+                    <p id="todayIncome" class="stat-value stat-value-income">0 Ft</p>
                 </div>
 
                 <!-- Monthly Expenses -->
-                <div
-                    class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-xl transition-all duration-300">
-                    <div class="flex items-center">
-                        <div
-                            class="p-4 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 rounded-xl">
-                            <i class="fas fa-chart-line text-primary-600 dark:text-primary-400"></i>
+                <div class="stat-card stat-card-expense">
+                    <div class="stat-header">
+                        <div class="stat-icon stat-icon-expense">
+                            <i class="fas fa-calendar-alt"></i>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Havi kiadások</p>
-                            <p id="monthlyExpenses" class="text-xl font-semibold text-warm-600 dark:text-warm-400">0 Ft</p>
-                        </div>
+                        <p class="stat-label" data-lang="monthlyExpenses">Havi kiadások</p>
                     </div>
+                    <p id="monthlyExpenses" class="stat-value stat-value-expense">0 Ft</p>
                 </div>
 
                 <!-- Monthly Income -->
-                <div
-                    class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-xl transition-all duration-300">
-                    <div class="flex items-center">
-                        <div
-                            class="p-4 bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/30 dark:to-emerald-800/30 rounded-xl">
-                            <i class="fas fa-wallet text-emerald-600 dark:text-emerald-400"></i>
+                <div class="stat-card stat-card-income">
+                    <div class="stat-header">
+                        <div class="stat-icon stat-icon-income">
+                            <i class="fas fa-wallet"></i>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Havi bevételek</p>
-                            <p id="monthlyIncome" class="text-xl font-semibold text-emerald-600 dark:text-emerald-400">0 Ft</p>
-                        </div>
+                        <p class="stat-label" data-lang="monthlyIncome">Havi bevételek</p>
                     </div>
+                    <p id="monthlyIncome" class="stat-value stat-value-income">0 Ft</p>
                 </div>
 
-                <!-- Net Balance -->
-                <div
-                    class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 backdrop-blur-sm rounded-2xl shadow-lg p-6 border-2 border-blue-300 dark:border-blue-700 hover:shadow-xl transition-all duration-300">
-                    <div class="flex items-center">
-                        <div
-                            class="p-4 bg-gradient-to-br from-blue-200 to-blue-300 dark:from-blue-700 dark:to-blue-600 rounded-xl">
-                            <i class="fas fa-balance-scale text-blue-700 dark:text-blue-200"></i>
+                <!-- Net Balance - Spans 2 columns -->
+                <div class="stat-card stat-card-balance sm:col-span-2">
+                    <div class="stat-header">
+                        <div class="stat-icon stat-icon-balance">
+                            <i class="fas fa-balance-scale"></i>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm text-gray-700 dark:text-gray-300 font-medium">Havi egyenleg</p>
-                            <p id="netBalance" class="text-2xl font-bold text-blue-700 dark:text-blue-300">0 Ft</p>
-                        </div>
+                        <p class="stat-label" data-lang="netBalance">Havi egyenleg</p>
                     </div>
+                    <p id="netBalance" class="stat-value stat-value-balance text-3xl sm:text-4xl">0 Ft</p>
                 </div>
             </div>
         </div>
 
-        <!-- Expense Form and List -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-            <!-- Add Expense Form -->
-            <div
-                class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4" data-lang="newExpense">Új Kiadás
-                </h2>
-                <form id="expenseForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Típus</label>
-                        <div class="flex space-x-4 mb-4">
-                            <label class="flex items-center cursor-pointer">
-                                <input type="radio" name="transactionType" value="expense" class="mr-2 text-primary-500 focus:ring-primary-500" checked>
-                                <span class="text-gray-700 dark:text-gray-300">Kiadás</span>
-                            </label>
-                            <label class="flex items-center cursor-pointer">
-                                <input type="radio" name="transactionType" value="income" class="mr-2 text-green-500 focus:ring-green-500">
-                                <span class="text-gray-700 dark:text-gray-300">Bevétel</span>
-                            </label>
-                        </div>
+        <!-- Transaction Form - Modernized & Compact -->
+        <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 p-4 sm:p-5">
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <i class="fas fa-plus-circle text-violet-500 text-lg"></i>
+                <span data-lang="newExpense">Új Tranzakció</span>
+            </h2>
+
+            <form id="expenseForm" class="space-y-3">
+                <!-- Type selector - Horizontal buttons -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Típus</label>
+                    <div class="flex gap-2">
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="transactionType" value="expense" class="peer sr-only" checked>
+                            <div class="px-4 py-2.5 bg-gray-100 dark:bg-slate-700 border-2 border-gray-300 dark:border-slate-600 rounded-lg text-center font-medium text-sm peer-checked:bg-rose-500 peer-checked:border-rose-500 peer-checked:text-white transition-all">
+                                <i class="fas fa-arrow-down mr-1"></i> Kiadás
+                            </div>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="transactionType" value="income" class="peer sr-only">
+                            <div class="px-4 py-2.5 bg-gray-100 dark:bg-slate-700 border-2 border-gray-300 dark:border-slate-600 rounded-lg text-center font-medium text-sm peer-checked:bg-emerald-500 peer-checked:border-emerald-500 peer-checked:text-white transition-all">
+                                <i class="fas fa-arrow-up mr-1"></i> Bevétel
+                            </div>
+                        </label>
                     </div>
+                </div>
+
+                <!-- Grid layout for Amount and Category -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                            data-lang="amount">Összeg (Ft)</label>
-                        <input type="number" id="expenseAmount" required
-                            class="w-full px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5" data-lang="amount">
+                            Összeg (Ft)
+                        </label>
+                        <input
+                            type="number"
+                            id="expenseAmount"
+                            required
+                            placeholder="10,000"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-slate-700/70 dark:text-white text-sm transition-all"
+                        >
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                            data-lang="category">Kategória</label>
-                        <select id="expenseCategory" required
-                            class="w-full px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
-                            <option value="" data-lang="selectCategory">Válassz kategóriát</option>
-                            <option value="food">Élelmiszer</option>
-                            <option value="transport">Közlekedés</option>
-                            <option value="entertainment">Szórakozás</option>
-                            <option value="bills">Számlák</option>
-                            <option value="other">Egyéb</option>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5" data-lang="category">
+                            Kategória
+                        </label>
+                        <select
+                            id="expenseCategory"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-slate-700/70 dark:text-white text-sm transition-all"
+                        >
+                            <option value="" data-lang="selectCategory">Válassz...</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- Grid layout for Description and Date -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                            data-lang="description">Leírás</label>
-                        <input type="text" id="expenseDescription" required
-                            class="w-full px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5" data-lang="description">
+                            Leírás
+                        </label>
+                        <input
+                            type="text"
+                            id="expenseDescription"
+                            required
+                            placeholder="pl. Tesco bevásárlás"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-slate-700/70 dark:text-white text-sm transition-all"
+                        >
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                            data-lang="date">Dátum</label>
-                        <input type="date" id="expenseDate" required
-                            class="w-full px-4 py-3 border border-orange-300 dark:border-stone-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-stone-700/50 dark:text-white transition-all duration-300">
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5" data-lang="date">
+                            Dátum
+                        </label>
+                        <input
+                            type="date"
+                            id="expenseDate"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-slate-700/70 dark:text-white text-sm transition-all"
+                        >
                     </div>
-                    <button type="submit"
-                        class="w-full px-6 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold relative">
-                        <div class="flex items-center justify-center">
-                            <i class="fas fa-plus mr-2"></i>
-                            <span data-lang="addExpense">Kiadás Hozzáadása</span>
-                            <div
-                                class="hidden absolute inset-0 bg-primary-600 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-spinner fa-spin"></i>
-                            </div>
-                        </div>
-                    </button>
-                </form>
+                </div>
+
+                <!-- Submit button -->
+                <button
+                    type="submit"
+                    class="w-full px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg hover:from-violet-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm sm:text-base flex items-center justify-center gap-2 group"
+                >
+                    <i class="fas fa-plus group-hover:rotate-90 transition-transform duration-200"></i>
+                    <span data-lang="addExpense">Tranzakció Hozzáadása</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Transaction List - Enhanced -->
+        <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 p-4 sm:p-5">
+            <!-- Header with action -->
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fas fa-history text-gray-500 text-lg"></i>
+                    <span data-lang="recentExpenses">Tranzakciók</span>
+                </h2>
+                <button id="showAllExpenses" class="text-violet-600 dark:text-violet-400 hover:text-violet-700 text-sm font-medium flex items-center gap-1.5">
+                    <i class="fas fa-list"></i>
+                    <span data-lang="viewAll">Összes</span>
+                </button>
             </div>
 
-            <!-- Recent Expenses -->
-            <div
-                class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white" data-lang="recentExpenses">Legutóbbi
-                        Kiadások</h2>
-                    <button id="showAllExpenses" class="text-primary-500 hover:text-primary-600 text-sm font-medium">
-                        <span data-lang="viewAll">Összes megtekintése</span>
+            <!-- Compact filter bar -->
+            <div class="mb-4 space-y-2">
+                <!-- Search -->
+                <div class="relative">
+                    <input
+                        type="text"
+                        id="searchInput"
+                        placeholder="Keresés..."
+                        data-lang-placeholder="searchPlaceholder"
+                        class="w-full px-3 py-2 pl-9 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700/70 text-sm focus:ring-2 focus:ring-violet-500 transition-all"
+                    >
+                    <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                </div>
+
+                <!-- Filters - Horizontal on all screens -->
+                <div class="flex gap-2 overflow-x-auto pb-1">
+                    <select id="filterType" class="flex-shrink-0 px-3 py-1.5 text-xs border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 focus:ring-2 focus:ring-violet-500">
+                        <option value="all" data-lang="filterAll">🔄 Összes</option>
+                        <option value="expense" data-lang="filterExpense">📉 Kiadás</option>
+                        <option value="income" data-lang="filterIncome">📈 Bevétel</option>
+                    </select>
+
+                    <select id="filterCategory" class="flex-1 px-3 py-1.5 text-xs border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 focus:ring-2 focus:ring-violet-500">
+                        <option value="all" data-lang="filterAllCategories">Minden kategória</option>
+                    </select>
+
+                    <select id="filterDateRange" class="flex-shrink-0 px-3 py-1.5 text-xs border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 focus:ring-2 focus:ring-violet-500">
+                        <option value="all" data-lang="filterAllTime">📅 Minden</option>
+                        <option value="today" data-lang="filterToday">Ma</option>
+                        <option value="week" data-lang="filterWeek">Hét</option>
+                        <option value="month" data-lang="filterMonth">Hónap</option>
+                        <option value="lastMonth" data-lang="filterLastMonth">Előző</option>
+                        <option value="year" data-lang="filterYear">Év</option>
+                    </select>
+
+                    <button id="clearFilters" class="flex-shrink-0 px-3 py-1.5 text-xs bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-all">
+                        <i class="fas fa-times"></i>
                     </button>
                 </div>
-                <div id="recentExpensesList" class="space-y-3 max-h-80 overflow-y-auto">
-                    <!-- Recent expenses will be populated here -->
-                </div>
+            </div>
+
+            <!-- Transaction list with better density -->
+            <div id="recentExpensesList" class="space-y-2 max-h-96 overflow-y-auto">
+                <!-- Transactions will be populated here -->
             </div>
         </div>
 
-        <!-- Charts -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+        <!-- Charts - Optimized -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <!-- Expense Category Chart -->
-            <div
-                class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4" data-lang="categoryChart">Kiadások
-                    Kategóriánként</h2>
-                <div class="relative">
-                    <canvas id="categoryChart" width="400" height="400"></canvas>
+            <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 p-4 sm:p-5">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-chart-pie text-rose-500"></i>
+                    <span data-lang="categoryChart">Kiadás megoszlás</span>
+                </h2>
+                <div class="relative h-64">
+                    <canvas id="categoryChart"></canvas>
                 </div>
             </div>
 
             <!-- Income Category Chart -->
-            <div
-                class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-emerald-200/50 dark:border-emerald-600/50 hover:shadow-2xl transition-all duration-300">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4" data-lang="incomeCategoryChart">Bevételek
-                    Kategóriánként</h2>
-                <div class="relative">
-                    <canvas id="incomeCategoryChart" width="400" height="400"></canvas>
+            <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 p-4 sm:p-5">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-chart-pie text-emerald-500"></i>
+                    <span data-lang="incomeCategoryChart">Bevétel megoszlás</span>
+                </h2>
+                <div class="relative h-64">
+                    <canvas id="incomeCategoryChart"></canvas>
                 </div>
             </div>
         </div>
 
         <!-- Monthly Trend Chart -->
-        <div class="grid grid-cols-1 gap-8">
-            <div
-                class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-orange-200/50 dark:border-stone-600/50 hover:shadow-2xl transition-all duration-300">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4" data-lang="monthlyTrend">Havi Trend
-                </h2>
-                <div class="relative h-96">
-                    <canvas id="trendChart"></canvas>
-                </div>
+        <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 p-4 sm:p-5">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <i class="fas fa-chart-line text-blue-500"></i>
+                <span data-lang="monthlyTrend">Havi Trend</span>
+            </h2>
+            <div class="relative h-64 sm:h-72">
+                <canvas id="trendChart"></canvas>
             </div>
         </div>
     </main>
+
+    <!-- Mobile Bottom Action Bar (Phase 7) -->
+    <div class="fixed bottom-0 left-0 right-0 lg:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-slate-700 p-3 shadow-2xl z-50">
+        <div class="flex gap-2 max-w-2xl mx-auto">
+            <button onclick="document.getElementById('expenseForm').scrollIntoView({behavior: 'smooth'})" class="flex-1 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg font-semibold shadow-lg flex items-center justify-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span>Új tranzakció</span>
+            </button>
+            <button onclick="document.getElementById('searchInput').focus()" class="w-12 py-3 bg-gray-100 dark:bg-slate-800 rounded-lg">
+                <i class="fas fa-search text-gray-600 dark:text-gray-400"></i>
+            </button>
+        </div>
+    </div>
 
     <!-- All Expenses Modal -->
     <div id="expensesModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
