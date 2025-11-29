@@ -11,6 +11,12 @@ class FinanceApp {
         this.currentEditId = null;
         this.currentLanguage = 'hu';
 
+        // Search and filter state
+        this.searchQuery = '';
+        this.filterType = 'all';
+        this.filterCategory = 'all';
+        this.filterDateRange = 'all';
+
         this.languages = {
             hu: {
                 appTitle: 'Pénzügyi Nyilvántartó',
@@ -20,6 +26,10 @@ class FinanceApp {
                 spending: 'Költés',
                 remaining: 'Maradék:',
                 todayExpenses: 'Mai kiadások',
+                todayIncome: 'Mai bevételek',
+                monthlyExpenses: 'Havi kiadások',
+                monthlyIncome: 'Havi bevételek',
+                netBalance: 'Havi egyenleg',
                 monthlyAmount: 'Havi összeg',
                 newExpense: 'Új Kiadás',
                 amount: 'Összeg (Ft)',
@@ -68,7 +78,19 @@ class FinanceApp {
                 categoryIcon: 'Ikon',
                 saveCategory: 'Mentés',
                 deleteCategory: 'Törlés',
-                cancelEdit: 'Mégse'
+                cancelEdit: 'Mégse',
+                searchPlaceholder: 'Keresés leírás alapján...',
+                filterAll: 'Összes',
+                filterExpense: 'Kiadások',
+                filterIncome: 'Bevételek',
+                filterAllCategories: 'Minden kategória',
+                filterAllTime: 'Minden idő',
+                filterToday: 'Ma',
+                filterWeek: 'Ez a hét',
+                filterMonth: 'Ez a hónap',
+                filterLastMonth: 'Előző hónap',
+                filterYear: 'Ez az év',
+                clearFilters: 'Szűrők törlése'
             },
             en: {
                 appTitle: 'Finance Tracker',
@@ -78,6 +100,10 @@ class FinanceApp {
                 spending: 'Spending',
                 remaining: 'Remaining:',
                 todayExpenses: 'Today\'s expenses',
+                todayIncome: 'Today\'s income',
+                monthlyExpenses: 'Monthly expenses',
+                monthlyIncome: 'Monthly income',
+                netBalance: 'Net balance',
                 monthlyAmount: 'Monthly amount',
                 newExpense: 'New Expense',
                 amount: 'Amount (HUF)',
@@ -126,7 +152,19 @@ class FinanceApp {
                 categoryIcon: 'Icon',
                 saveCategory: 'Save',
                 deleteCategory: 'Delete',
-                cancelEdit: 'Cancel'
+                cancelEdit: 'Cancel',
+                searchPlaceholder: 'Search by description...',
+                filterAll: 'All',
+                filterExpense: 'Expenses',
+                filterIncome: 'Income',
+                filterAllCategories: 'All categories',
+                filterAllTime: 'All time',
+                filterToday: 'Today',
+                filterWeek: 'This week',
+                filterMonth: 'This month',
+                filterLastMonth: 'Last month',
+                filterYear: 'This year',
+                clearFilters: 'Clear filters'
             }
         };
 
@@ -137,34 +175,50 @@ class FinanceApp {
         try {
             console.log('Initializing app...');
 
-            // Wait for Supabase to initialize and restore session
-            console.log('Waiting for session restoration...');
+            // FIRST: Immediately check for existing session
+            console.log('Step 1: Checking for immediate session...');
+            let sessionResult = await window.supabaseClient.auth.getSession();
+            let session = sessionResult.data?.session;
 
-            const session = await new Promise((resolve) => {
-                // Set a timeout to fallback to getSession
-                const timeoutId = setTimeout(async () => {
-                    console.log('Timeout waiting for auth state change, checking getSession...');
-                    const { data } = await window.supabaseClient.auth.getSession();
-                    resolve(data.session);
-                }, 2000); // 2 seconds timeout
+            if (session) {
+                console.log('✅ Immediate session found!', session.user.id);
+            } else {
+                console.log('No immediate session, waiting for auth state change...');
 
-                // Listen for auth state changes
-                const { data: { subscription } } = window.supabaseClient.auth.onAuthStateChange((event, session) => {
-                    console.log('Auth state change during init:', event);
-                    if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                        clearTimeout(timeoutId);
-                        resolve(session);
-                        subscription.unsubscribe();
-                    } else if (event === 'SIGNED_OUT') {
-                        clearTimeout(timeoutId);
-                        resolve(null);
-                        subscription.unsubscribe();
-                    }
+                // SECOND: Wait for auth state change event
+                session = await new Promise((resolve) => {
+                    let resolved = false;
+
+                    // Timeout fallback
+                    const timeoutId = setTimeout(async () => {
+                        if (!resolved) {
+                            console.log('Timeout reached, final session check...');
+                            const { data } = await window.supabaseClient.auth.getSession();
+                            resolved = true;
+                            resolve(data.session);
+                        }
+                    }, 5000);
+
+                    // Listen for auth state changes
+                    const { data: { subscription } } = window.supabaseClient.auth.onAuthStateChange((event, authSession) => {
+                        console.log('Auth state change during init:', event);
+                        if (!resolved && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+                            clearTimeout(timeoutId);
+                            resolved = true;
+                            subscription.unsubscribe();
+                            resolve(authSession);
+                        } else if (!resolved && event === 'SIGNED_OUT') {
+                            clearTimeout(timeoutId);
+                            resolved = true;
+                            subscription.unsubscribe();
+                            resolve(null);
+                        }
+                    });
                 });
-            });
+            }
 
             if (!session) {
-                console.log('No authenticated session after retries, redirecting to auth.html...');
+                console.log('No authenticated session after all checks, redirecting to auth.html...');
                 window.location.href = 'auth.html';
                 return;
             }
@@ -441,6 +495,7 @@ class FinanceApp {
     }
 
     setupEventListeners() {
+        try {
         // Budget form
         document.getElementById('setBudgetBtn').addEventListener('click', async () => {
             await this.setBudget();
@@ -515,6 +570,51 @@ class FinanceApp {
         document.getElementById('filterMonth')?.addEventListener('change', () => {
             this.renderAllExpenses();
         });
+
+        // Search and filter handlers for Recent Expenses section
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.searchQuery = e.target.value.toLowerCase();
+                this.updateRecentExpenses();
+            });
+        }
+
+        const filterType = document.getElementById('filterType');
+        if (filterType) {
+            filterType.addEventListener('change', (e) => {
+                this.filterType = e.target.value;
+                this.updateFilterCategoryOptions();
+                this.updateRecentExpenses();
+            });
+        }
+
+        const filterCategory = document.getElementById('filterCategory');
+        if (filterCategory) {
+            filterCategory.addEventListener('change', (e) => {
+                this.filterCategory = e.target.value;
+                this.updateRecentExpenses();
+            });
+        }
+
+        const filterDateRange = document.getElementById('filterDateRange');
+        if (filterDateRange) {
+            filterDateRange.addEventListener('change', (e) => {
+                this.filterDateRange = e.target.value;
+                this.updateRecentExpenses();
+            });
+        }
+
+        const clearFilters = document.getElementById('clearFilters');
+        if (clearFilters) {
+            clearFilters.addEventListener('click', () => {
+                this.clearAllFilters();
+            });
+        }
+        } catch (error) {
+            console.error("Error in setupEventListeners:", error);
+            console.error("This is usually caused by missing DOM elements. The app will continue to work.");
+        }
     }
 
     // Category Management Methods
@@ -1004,6 +1104,7 @@ class FinanceApp {
         this.calculateBalance();
         this.updateBudgetDisplay();
         this.updateQuickStats();
+        this.updateFilterCategoryOptions();
         this.updateRecentExpenses();
         this.updateCharts();
         this.updateCategorySelectors();
@@ -1129,12 +1230,20 @@ class FinanceApp {
 
     updateRecentExpenses() {
         const recentList = document.getElementById('recentExpensesList');
-        const recentExpenses = this.expenses
+
+        // Apply filters
+        let filteredExpenses = this.filterExpenses(this.expenses);
+
+        // Sort and limit to recent items
+        const recentExpenses = filteredExpenses
             .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-            .slice(0, 5);
+            .slice(0, 10); // Show 10 instead of 5 when filtering
 
         if (recentExpenses.length === 0) {
-            recentList.innerHTML = `<div class="text-center text-gray-500 dark:text-gray-400 py-8">${this.getText('noExpenses')}</div>`;
+            const message = this.searchQuery || this.filterType !== 'all' || this.filterCategory !== 'all' || this.filterDateRange !== 'all'
+                ? this.getText('noFilteredExpenses')
+                : this.getText('noExpenses');
+            recentList.innerHTML = `<div class="text-center text-gray-500 dark:text-gray-400 py-8">${message}</div>`;
             return;
         }
 
@@ -1752,7 +1861,17 @@ class FinanceApp {
             }
         });
 
+        // Update placeholders
+        document.querySelectorAll('[data-lang-placeholder]').forEach(element => {
+            const key = element.getAttribute('data-lang-placeholder');
+            const text = this.getText(key);
+            if (text) {
+                element.placeholder = text;
+            }
+        });
+
         this.updateCategorySelectors();
+        this.updateFilterCategoryOptions();
         this.updateCharts(); // Refresh charts with new language
     }
 
@@ -1815,6 +1934,142 @@ class FinanceApp {
             option.textContent = cat.name;
             select.appendChild(option);
         });
+    }
+
+    // Search and filter methods
+    filterExpenses(expenses) {
+        return expenses.filter(expense => {
+            // Search query filter
+            if (this.searchQuery) {
+                const description = expense.description.toLowerCase();
+                if (!description.includes(this.searchQuery)) {
+                    return false;
+                }
+            }
+
+            // Type filter
+            if (this.filterType !== 'all') {
+                if (expense.type !== this.filterType) {
+                    return false;
+                }
+            }
+
+            // Category filter
+            if (this.filterCategory !== 'all') {
+                if (expense.category !== parseInt(this.filterCategory)) {
+                    return false;
+                }
+            }
+
+            // Date range filter
+            if (this.filterDateRange !== 'all') {
+                const expenseDate = new Date(expense.date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                switch (this.filterDateRange) {
+                    case 'today':
+                        const todayStr = today.toISOString().split('T')[0];
+                        if (expense.date !== todayStr) return false;
+                        break;
+
+                    case 'week':
+                        const weekAgo = new Date(today);
+                        weekAgo.setDate(today.getDate() - 7);
+                        if (expenseDate < weekAgo) return false;
+                        break;
+
+                    case 'month':
+                        const thisMonth = today.getMonth();
+                        const thisYear = today.getFullYear();
+                        if (expenseDate.getMonth() !== thisMonth || expenseDate.getFullYear() !== thisYear) {
+                            return false;
+                        }
+                        break;
+
+                    case 'lastMonth':
+                        const lastMonth = new Date(today);
+                        lastMonth.setMonth(today.getMonth() - 1);
+                        const lmMonth = lastMonth.getMonth();
+                        const lmYear = lastMonth.getFullYear();
+                        if (expenseDate.getMonth() !== lmMonth || expenseDate.getFullYear() !== lmYear) {
+                            return false;
+                        }
+                        break;
+
+                    case 'year':
+                        const currentYear = today.getFullYear();
+                        if (expenseDate.getFullYear() !== currentYear) return false;
+                        break;
+                }
+            }
+
+            return true;
+        });
+    }
+
+    updateFilterCategoryOptions() {
+        const select = document.getElementById('filterCategory');
+        if (!select) return;
+
+        // Save current selection
+        const currentValue = this.filterCategory;
+
+        // Clear options except "All"
+        select.innerHTML = `<option value="all" data-lang="filterAllCategories">${this.getText('filterAllCategories')}</option>`;
+
+        // Filter categories by type
+        let filteredCategories = this.categories;
+        if (this.filterType !== 'all') {
+            filteredCategories = this.categories.filter(cat =>
+                cat.type === this.filterType || !cat.type
+            );
+        }
+
+        // Add category options
+        filteredCategories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id;
+            option.textContent = cat.name;
+            select.appendChild(option);
+        });
+
+        // Restore selection if still valid
+        if (currentValue !== 'all') {
+            const optionExists = Array.from(select.options).some(opt => opt.value === currentValue);
+            if (optionExists) {
+                select.value = currentValue;
+                this.filterCategory = currentValue;
+            } else {
+                select.value = 'all';
+                this.filterCategory = 'all';
+            }
+        }
+    }
+
+    clearAllFilters() {
+        // Reset filter state
+        this.searchQuery = '';
+        this.filterType = 'all';
+        this.filterCategory = 'all';
+        this.filterDateRange = 'all';
+
+        // Reset UI elements
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.value = '';
+
+        const filterType = document.getElementById('filterType');
+        if (filterType) filterType.value = 'all';
+
+        const filterCategory = document.getElementById('filterCategory');
+        if (filterCategory) filterCategory.value = 'all';
+
+        const filterDateRange = document.getElementById('filterDateRange');
+        if (filterDateRange) filterDateRange.value = 'all';
+
+        // Update category options and expenses list
+        this.updateFilterCategoryOptions();
+        this.updateRecentExpenses();
     }
 
     // Setup transaction type listener
