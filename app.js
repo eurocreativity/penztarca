@@ -2228,18 +2228,36 @@ class FinanceApp {
     // Setup transaction type listener
     setupTransactionTypeListener() {
         const typeRadios = document.getElementsByName('transactionType');
-        const submitButton = document.querySelector('#expenseForm button[type="submit"] span[data-lang="addExpense"]');
+        const submitButtonSpan = document.querySelector('#expenseForm button[type="submit"] span[data-lang]');
 
         typeRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
                 const type = e.target.value;
+
                 // Filter categories based on selected transaction type
                 this.filterCategoriesByType(type);
+
+                // Update submit button text based on type
+                if (submitButtonSpan) {
+                    if (type === 'income') {
+                        submitButtonSpan.textContent = this.getText('addIncome');
+                        submitButtonSpan.setAttribute('data-lang', 'addIncome');
+                    } else {
+                        submitButtonSpan.textContent = this.getText('addExpense');
+                        submitButtonSpan.setAttribute('data-lang', 'addExpense');
+                    }
+                }
             });
         });
 
         // Initialize with default expense type on page load
         this.filterCategoriesByType('expense');
+
+        // Set initial button text
+        if (submitButtonSpan) {
+            submitButtonSpan.textContent = this.getText('addExpense');
+            submitButtonSpan.setAttribute('data-lang', 'addExpense');
+        }
     }
 
     /* ========================================
