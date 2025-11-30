@@ -50,20 +50,36 @@ The Supabase credentials are currently hardcoded in `supabase-client.js`. For pr
 
 1. Create a Supabase project at https://supabase.com
 2. Update `supabase-client.js` with your project URL and anon key
-3. Set up the database schema (tables for profiles, transactions, budgets)
+3. Run database migrations from `migrations/` folder in order:
+   - `add_type_to_categories.sql` - Adds type field to categories
+   - `add_income_categories_for_existing_users.sql` - Creates income categories
 4. Configure authentication providers in Supabase dashboard
+
+## Documentation
+
+For detailed project information, see:
+- **PROJECT_STATUS.md** - Complete project status, recent changes, and deployment info
+- **migrations/README.md** - Database migration instructions
+- **docs/** - Feature-specific documentation
 
 ## Project Structure
 
 ```
-├── index.html          # Main app page
-├── auth.html           # Authentication page
-├── landing.html        # Landing page
-├── app.js              # Main application logic
-├── auth.js             # Authentication logic
-├── supabase-client.js  # Supabase client initialization
-├── netlify.toml        # Netlify configuration
-└── README.md           # This file
+├── index.html              # Main app page
+├── auth.html               # Authentication page
+├── landing.html            # Landing page
+├── app.js                  # Main application logic
+├── auth.js                 # Authentication logic
+├── supabase-client.js      # Supabase client initialization
+├── netlify.toml            # Netlify configuration
+├── PROJECT_STATUS.md       # Detailed project status and changelog
+├── README.md               # This file
+├── .claude/
+│   ├── commands/           # Claude Code slash commands
+│   ├── agents/             # Development agents
+│   └── skills/             # Project skills
+├── migrations/             # Database migration scripts
+└── docs/                   # Feature documentation
 ```
 
 ## License
