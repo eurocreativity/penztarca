@@ -16,10 +16,10 @@
 -- Each record defines a pattern that generates actual transactions automatically.
 
 CREATE TABLE recurring_transactions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id BIGSERIAL PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
-  category_id UUID REFERENCES categories(id) ON DELETE RESTRICT NOT NULL,
+  category_id BIGINT REFERENCES categories(id) ON DELETE RESTRICT NOT NULL,
   description TEXT NOT NULL,
   type TEXT NOT NULL CHECK (type IN ('expense', 'income')),
   frequency TEXT NOT NULL CHECK (frequency IN ('daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'semiannual', 'annual')),
