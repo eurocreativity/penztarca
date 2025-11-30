@@ -1,56 +1,96 @@
-# Irányelvek AI-asszisztált fejlesztéshez
+# GitHub Copilot Instructions - Pénztárca Project
 
-Ez a dokumentum alapvető útmutatást nyújt az ezen a személyes pénzügyi nyomkövető alkalmazáson dolgozó AI-ügynökök számára. Ezen elvek megértése kulcsfontosságú a hatékony és következetes közreműködéshez.
+## Project Context
+Personal finance web app with Vanilla JS + Supabase + Netlify
 
-## Architektúra áttekintése
+## 🎯 IMPORTANT: Use Project Skill
+The project has a custom skill with full context at:
+`.claude/skills/penztarca-project/SKILL.md`
 
-Az alkalmazás egy többoldalas, egyoldalas alkalmazás (SPA) architektúrát követ, vanilla JavaScript és Tailwind CSS (CDN-en keresztül) használatával. Nincs buildelési folyamat.
+**DON'T** ask me to read large documentation files.
+**DO** use the skill automatically for context.
 
-- **`landing.html`**: A nyilvános marketing és belépési oldal.
-- **`auth.html`**: A felhasználói regisztrációt és bejelentkezést kezeli. A logika az `auth.js` fájlban található.
-- **`index.html`**: A fő alkalmazás-irányítópult, amely a felhasználó bejelentkezése után látható. Az összes alapvető alkalmazáslogika az `app.js` fájlban található.
+## 📚 Modular Documentation
+For specific details, check these targeted docs:
+- `docs/QUICK_REF.md` - Links, commands (~300 tokens)
+- `docs/ARCHITECTURE.md` - Tech stack (~800 tokens)
+- `docs/DATABASE.md` - Schema, RLS (~800 tokens)
+- `docs/FEATURES.md` - Feature list (~900 tokens)
+- `docs/DEV_GUIDE.md` - Dev patterns (~1000 tokens)
+- `docs/TROUBLESHOOTING.md` - Common issues (~1000 tokens)
 
-A fő komponensek:
-- **`AuthManager` (`auth.js`)**: Egy statikus osztály, amely a felhasználói fiókokat (regisztráció, bejelentkezés, kijelentkezés) és a felhasználói adatok `localStorage`-ban való tárolását kezeli.
-- **`FinanceApp` (`app.js`)**: A fő alkalmazásosztály, amely a felhasználó bejelentkezése után inicializálódik. Kezeli a felhasználói felületet, az állapotot (kiadások, költségvetés, kategóriák) és a felhasználói interakciókat az irányítópulton belül.
+**NEVER** reference `PROJECT_STATUS.md` (archived)
 
-## Adatmegőrzés és állapotkezelés
+## 🛠 Tech Stack
+- Frontend: Vanilla JavaScript (ES6+), Tailwind CSS, Chart.js
+- Backend: Supabase (PostgreSQL, Auth)
+- Deployment: Netlify
+- No build process
 
-**Az alkalmazás teljes állapota a `localStorage`-ban van tárolva. Nincs háttéradatbázis.**
+## 💻 Code Style
+```javascript
+// ✅ USE
+class FinanceApp {
+    async saveExpense() {
+        const { data, error } = await supabase
+            .from('expenses')
+            .insert(expenseData);
+        
+        if (error) throw error;
+        this.expenses.push(data[0]);
+        this.updateUI();
+    }
+}
 
-- **`penztarca_users`**: Egy JSON stringgé alakított objektum, ahol a kulcsok a felhasználói e-mail címek. Minden érték egy felhasználói objektum, amely tartalmazza a profilt, a kiadásokat, a költségvetést és az egyéni kategóriákat.
-- **`penztarca_current_user`**: A jelenleg bejelentkezett felhasználó e-mail címét tárolja, munkamenet-kulcsként működve.
-
-**Fő munkafolyamat:**
-1.  Az `app.js` betöltéskor meghívja az `AuthManager.getCurrentUser()` metódust a bejelentkezett felhasználó adatainak lekéréséhez.
-2.  Minden adatmódosítást (kiadások hozzáadása, költségvetés módosítása stb.) a `FinanceApp` példány kezel.
-3.  A változások a `financeApp.saveUserData()` meghívásával kerülnek mentésre, amely az `AuthManager.saveUserData()` segítségével frissíti a megfelelő felhasználó adatblokkját a `penztarca_users` objektumban a `localStorage`-ban.
-
-## Fejlesztői munkafolyamat
-
-Az alkalmazás helyi futtatásához csupán egy egyszerű HTTP-szerverre van szükség.
-
-```bash
-# A projekt gyökeréből futtasd:
-python -m http.server 8000
+// ❌ AVOID
+var FinanceApp = function() { ... }
 ```
 
-Ezután nyisd meg a `http://localhost:8000/landing.html` címet a böngésződben.
+**Rules:**
+- ES6+ only (classes, async/await, arrow functions)
+- Const/let (never var)
+- Tailwind utilities (not custom CSS)
+- i18n: Always use `getText(key)` for UI text
+- Test both languages (hu/en) and themes (light/dark)
 
-Nincsenek buildelési, fordítási vagy függőségtelepítési lépések.
+## 🗄 Database
+Tables: `profiles`, `categories`, `expenses`
+All have RLS enabled - users only see their own data
+Type system: `'expense'` | `'income'`
 
-## Kódbázis minták és konvenciók
+## 🔑 Key Methods (FinanceApp in app.js)
+- `init()` - Session check + load data
+- `saveExpense()` - Create/update transaction
+- `filterExpenses()` - Apply search/filters
+- `updateUI()` - Master refresh
+- `getText(key)` - i18n translation
 
-- **Authentikáció**: Az alkalmazás több felhasználó számára készült. Mindig győződj meg róla, hogy az adatok csak a `currentUser`-hoz (aktuális felhasználóhoz) vannak lekérve és mentve. Használd az `AuthManager` statikus metódusait minden felhasználói adatművelethez.
-- **Lokalizáció (i18n)**: Az alkalmazás támogatja a magyar (`hu`) és az angol (`en`) nyelvet.
-  - A szöveges karakterláncok a `FinanceApp` osztályon belüli `languages` objektumban vannak tárolva.
-  - Használd a `data-lang="kulcs"` attribútumot a HTML-ben a fordítandó elemekhez.
-  - Használd a `financeApp.getText('kulcs')` metódust a JavaScriptben a lefordított szövegek lekéréséhez.
-- **Dinamikus kategóriakezelés**: A felhasználók kezelhetik saját kiadási kategóriáikat.
-  - A kategóriaadatok minden felhasználó saját objektumában vannak tárolva a `localStorage`-ban.
-  - Kiadások hozzáadásakor vagy szerkesztésekor a kategórialistát dinamikusan kell feltölteni a felhasználó `categories` tömbjéből.
-- **Felhasználói felület és stílus**:
-  - A felhasználói felület Tailwind CSS osztályokkal van felépítve közvetlenül a HTML fájlokban.
-  - A Tailwind konfigurációja egy `<script>` címkében van definiálva az `index.html`-ben.
-  - A modális ablakokat és más dinamikus elemeket gyakran közvetlenül a JavaScript hozza létre és manipulálja (pl. `createCategoryManagerModal` az `app.js`-ben).
-- **Függőségek**: Minden függőség (`Tailwind CSS`, `Chart.js`, `Font Awesome`) CDN-en keresztül van betöltve a HTML fájlok `<head>` részében. Nincs `package.json`.
+## 🌍 i18n Pattern
+```javascript
+this.languages = {
+    hu: { welcome: 'Üdvözöljük' },
+    en: { welcome: 'Welcome' }
+};
+```
+
+## 📝 Git Workflow
+Branch naming: `claude/feature-name-<session-id>`
+Example: `claude/new-filter-01ABcd23`
+
+## ⚡ Token Optimization (CRITICAL!)
+When I ask for help:
+1. **Check skill first** (auto-loaded)
+2. **Read specific docs** only if needed (e.g., "check docs/DATABASE.md")
+3. **Never** suggest reading entire PROJECT_STATUS.md
+4. Keep responses focused and concise
+
+## 🚨 Best Practices
+1. Always check auth before DB operations
+2. Update local state after DB changes
+3. Call `updateUI()` after state updates
+4. Use try-catch for all async functions
+5. Validate input before saving
+
+---
+**Skill location:** `.claude/skills/penztarca-project/SKILL.md`
+**Last updated:** 2025-11-28

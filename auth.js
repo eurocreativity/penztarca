@@ -59,15 +59,11 @@ class AuthManager {
             loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 console.log('Login form submitted');
-                const submitButton = e.target.querySelector('button[type="submit"]');
-                if (submitButton) submitButton.disabled = true;
                 try {
                     await this.handleLogin();
                 } catch (error) {
                     console.error('Login error:', error);
-                    this.showError('loginError', 'Hiba történt a bejelentkezés során: ' + error.message);
-                } finally {
-                    if (submitButton) submitButton.disabled = false;
+                    this.hideLoadingOverlay();
                 }
             });
         } else {
@@ -79,15 +75,11 @@ class AuthManager {
             registerForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 console.log('Register form submitted');
-                const submitButton = e.target.querySelector('button[type="submit"]');
-                if (submitButton) submitButton.disabled = true;
                 try {
                     await this.handleRegister();
                 } catch (error) {
                     console.error('Registration error:', error);
-                    this.showError('registerError', 'Hiba történt a regisztráció során: ' + error.message);
-                } finally {
-                    if (submitButton) submitButton.disabled = false;
+                    this.hideLoadingOverlay();
                 }
             });
         } else {
@@ -97,29 +89,22 @@ class AuthManager {
         document.getElementById('forgotPasswordFormElement')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             console.log('Forgot password form submitted');
-            const submitButton = e.target.querySelector('button[type="submit"]');
-            if (submitButton) submitButton.disabled = true;
             try {
                 await this.handleForgotPassword();
             } catch (error) {
                 console.error('Password reset error:', error);
-                this.showError('forgotPasswordError', 'Hiba történt a jelszó visszaállítás során');
-            } finally {
-                if (submitButton) submitButton.disabled = false;
+                this.hideLoadingOverlay();
             }
         });
 
         document.getElementById('resetPasswordFormElement')?.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const submitButton = e.target.querySelector('button[type="submit"]');
-            if (submitButton) submitButton.disabled = true;
+            console.log('Reset password form submitted');
             try {
                 await this.handlePasswordReset();
             } catch (error) {
                 console.error('Password reset error:', error);
-                this.showError('resetPasswordError', 'Hiba történt a jelszó módosítása során');
-            } finally {
-                if (submitButton) submitButton.disabled = false;
+                this.hideLoadingOverlay();
             }
         });
     }
@@ -132,7 +117,11 @@ class AuthManager {
             }
 
             console.log('Checking auth status...');
+            this.showLoadingOverlay('Munkamenet ellenőrzése...');
+
             const { data: { session }, error: sessionError } = await window.supabaseClient.auth.getSession();
+
+            this.hideLoadingOverlay();
 
             if (sessionError) {
                 console.error('Session error:', sessionError);
@@ -174,6 +163,7 @@ class AuthManager {
             });
         } catch (error) {
             console.error('Error in checkAuthStatus:', error);
+            this.hideLoadingOverlay();
         }
     }
 
@@ -260,6 +250,101 @@ class AuthManager {
         });
     };
 
+    // Loading state management
+    /**
+     * Show loading overlay with message
+     * @param {string} message - Message to display in loading overlay
+     * @param {number} minDisplayTime - Minimum time to display spinner (default: 300ms)
+     */
+    showLoadingOverlay = (message = 'Betöltés...', minDisplayTime = 300) => {
+        const overlay = document.getElementById('loadingOverlay');
+        const loadingMessage = document.getElementById('loadingMessage');
+        if (overlay && loadingMessage) {
+            loadingMessage.textContent = message;
+            overlay.classList.remove('hidden');
+            overlay.classList.add('fade-in');
+            overlay.dataset.showTime = Date.now();
+            overlay.dataset.minDisplayTime = minDisplayTime;
+        }
+    };
+
+    /**
+     * Hide loading overlay with minimum display time
+     * @param {number} minDisplayTime - Minimum time to display spinner (default: 300ms)
+     */
+    hideLoadingOverlay = (minDisplayTime = 300) => {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            const showTime = overlay.dataset.showTime ? parseInt(overlay.dataset.showTime) : Date.now();
+            const elapsedTime = Date.now() - showTime;
+            const delayTime = Math.max(0, minDisplayTime - elapsedTime);
+            
+            setTimeout(() => {
+                overlay.classList.add('fade-out');
+                setTimeout(() => {
+                    overlay.classList.remove('fade-in');
+                    overlay.classList.add('hidden');
+                    overlay.classList.remove('fade-out');
+                    delete overlay.dataset.showTime;
+                    delete overlay.dataset.minDisplayTime;
+                }, 300);
+            }, delayTime);
+        }
+    };
+
+    /**
+     * Set button to loading state with spinner
+     * @param {HTMLElement} button - Button element to set loading state
+     * @param {boolean} isLoading - True to enable loading, false to disable
+     * @param {string} originalText - Optional original text to restore
+     */
+    setButtonLoading = (button, isLoading, originalText = null) => {
+        if (!button) return;
+
+        if (isLoading) {
+            button.setAttribute('data-loading', 'true');
+            button.disabled = true;
+            if (!button.dataset.originalText && originalText) {
+                button.dataset.originalText = originalText;
+            } else if (!button.dataset.originalText) {
+                button.dataset.originalText = button.textContent;
+            }
+        } else {
+            button.removeAttribute('data-loading');
+            button.disabled = false;
+            if (button.dataset.originalText) {
+                button.textContent = button.dataset.originalText;
+                delete button.dataset.originalText;
+            }
+        }
+    };
+
+    /**
+     * Show loading overlay with fade animation
+     * @param {string} message - Message to display
+     */
+    showLoadingWithAnimation = (message = 'Betöltés...') => {
+        this.showLoadingOverlay(message);
+    };
+
+    /**
+     * Hide loading overlay with fade animation
+     */
+    hideLoadingWithAnimation = () => {
+        this.hideLoadingOverlay();
+    };
+
+    /**
+     * Set button group loading state
+     * @param {string} buttonSelector - CSS selector for buttons
+     * @param {boolean} isLoading - Loading state
+     */
+    setButtonGroupLoading = (buttonSelector, isLoading) => {
+        const buttons = document.querySelectorAll(buttonSelector);
+        buttons.forEach(button => {
+            this.setButtonLoading(button, isLoading);
+        });
+    };
     showError = (elementId, message) => {
         const errorElement = document.getElementById(elementId);
         if (errorElement) {
@@ -315,7 +400,22 @@ class AuthManager {
                 return;
             }
 
+            // Show loading state
+            const registerForm = document.getElementById('registerFormElement');
+            const submitButton = registerForm?.querySelector('button[type="submit"]');
+            this.setButtonLoading(submitButton, true, submitButton?.textContent);
+            this.showLoadingOverlay('Regisztráció folyamatban...');
+
             console.log('Starting registration process...');
+
+            // Use production URL for email confirmation
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const redirectUrl = isLocalhost
+                ? 'https://penztarca.netlify.app/auth.html?verify=true'
+                : window.location.origin + '/auth.html?verify=true';
+
+            this.showLoadingOverlay('Ellenőrzési email küldése...');
+
             const { data, error } = await window.supabaseClient.auth.signUp({
                 email: email,
                 password: password,
@@ -323,7 +423,7 @@ class AuthManager {
                     data: {
                         name: name
                     },
-                    emailRedirectTo: window.location.origin + '/auth.html?verify=true'
+                    emailRedirectTo: redirectUrl
                 }
             });
 
@@ -331,15 +431,20 @@ class AuthManager {
 
             if (error) {
                 console.error('Registration error:', error);
+                this.hideLoadingOverlay();
+                this.setButtonLoading(submitButton, false);
                 this.showError('registerError', error.message);
                 return;
             }
 
             if (data?.user?.identities?.length === 0) {
+                this.hideLoadingOverlay();
+                this.setButtonLoading(submitButton, false);
                 this.showError('registerError', 'Ez az email cím már regisztrálva van. Kérlek, jelentkezz be.');
                 return;
             }
 
+            this.hideLoadingOverlay();
             this.showSuccess('registerSuccess', 'Sikeres regisztráció! Kérlek, erősítsd meg az e-mail címedet.');
             setTimeout(() => {
                 this.showLoginForm();
@@ -347,6 +452,10 @@ class AuthManager {
             }, 3000);
         } catch (error) {
             console.error('Registration error:', error);
+            const registerForm = document.getElementById('registerFormElement');
+            const submitButton = registerForm?.querySelector('button[type="submit"]');
+            this.hideLoadingOverlay();
+            this.setButtonLoading(submitButton, false);
             this.showError('registerError', 'Hiba történt a regisztráció során');
         }
     };
@@ -374,6 +483,12 @@ class AuthManager {
                 return;
             }
 
+            // Show loading state
+            const loginForm = document.getElementById('loginFormElement');
+            const submitButton = loginForm?.querySelector('button[type="submit"]');
+            this.setButtonLoading(submitButton, true, submitButton?.textContent);
+            this.showLoadingOverlay('Bejelentkezés folyamatban...');
+
             console.log('Attempting to sign in...');
             const { data, error } = await window.supabaseClient.auth.signInWithPassword({
                 email: email,
@@ -382,6 +497,8 @@ class AuthManager {
 
             if (error) {
                 console.error('Login error:', error);
+                this.hideLoadingOverlay();
+                this.setButtonLoading(submitButton, false);
                 let errorMessage = 'Hiba történt a bejelentkezés során';
                 if (error.message.includes('Invalid login credentials')) {
                     errorMessage = 'Hibás email cím vagy jelszó';
@@ -393,12 +510,15 @@ class AuthManager {
             }
 
             if (!data.session) {
+                console.error('No session returned from signIn');
+                this.hideLoadingOverlay();
+                this.setButtonLoading(submitButton, false);
                 this.showError('loginError', 'Sikertelen bejelentkezés. Kérlek próbáld újra.');
                 return;
             }
 
             console.log('Login successful:', data);
-            this.showSuccess('loginSuccess', 'Sikeres bejelentkezés!');
+            this.showLoadingOverlay('Munkamenet ellenőrzése...');
 
             // Wait longer for session to be fully persisted
             console.log('Waiting for session to persist...');
@@ -422,13 +542,22 @@ class AuthManager {
 
             if (verifySession) {
                 console.log('✅ Session verified, redirecting to index.html');
-                window.location.href = 'index.html';
+                this.showLoadingOverlay('Átirányítás...');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 500);
             } else {
                 console.error('❌ Session not found after login and retries');
+                this.hideLoadingOverlay();
+                this.setButtonLoading(submitButton, false);
                 this.showError('loginError', 'Sikertelen bejelentkezés. Kérlek próbáld újra vagy töröld a böngésző cache-t.');
             }
         } catch (error) {
             console.error('Unexpected error during login:', error);
+            const loginForm = document.getElementById('loginFormElement');
+            const submitButton = loginForm?.querySelector('button[type="submit"]');
+            this.hideLoadingOverlay();
+            this.setButtonLoading(submitButton, false);
             this.showError('loginError', 'Váratlan hiba történt. Kérlek, próbáld újra később.');
         }
     };
@@ -443,11 +572,20 @@ class AuthManager {
         }
 
         try {
+            // Show loading state
+            const forgotForm = document.getElementById('forgotPasswordFormElement');
+            const submitButton = forgotForm?.querySelector('button[type="submit"]');
+            this.setButtonLoading(submitButton, true, submitButton?.textContent);
+            this.showLoadingOverlay('Jelszó-visszaállítást küldésben...');
+
+            // Use production URL for password reset
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const redirectTo = isLocalhost
+                ? 'https://penztarca.netlify.app/auth.html'
+                : new URL('/auth.html', window.location.origin).toString();
+
             console.log('Current URL:', window.location.href);
             console.log('Origin:', window.location.origin);
-            console.log('Redirect URL:', window.location.origin + '/auth.html?type=recovery');
-
-            const redirectTo = new URL('/auth.html', window.location.origin).toString();
             console.log('Final redirect URL:', redirectTo);
 
             console.log('Sending password reset email to:', email);
@@ -459,13 +597,25 @@ class AuthManager {
 
             if (error) {
                 console.error('Password reset error:', error);
+                this.hideLoadingOverlay();
+                this.setButtonLoading(submitButton, false);
                 this.showError('forgotPasswordError', 'Hiba történt a jelszó-visszaállítás során: ' + error.message);
             } else {
                 console.log('Password reset email sent successfully');
+                this.hideLoadingOverlay();
                 this.showSuccess('forgotPasswordSuccess', 'Jelszó-visszaállító linket küldtünk az e-mail címedre. Kérlek, ellenőrizd a leveleidet!');
+                // Clear the form after success
+                setTimeout(() => {
+                    document.getElementById('forgotPasswordEmail').value = '';
+                    this.setButtonLoading(submitButton, false);
+                }, 2000);
             }
         } catch (error) {
             console.error('Unexpected error during password reset:', error);
+            const forgotForm = document.getElementById('forgotPasswordFormElement');
+            const submitButton = forgotForm?.querySelector('button[type="submit"]');
+            this.hideLoadingOverlay();
+            this.setButtonLoading(submitButton, false);
             this.showError('forgotPasswordError', 'Váratlan hiba történt a jelszó-visszaállítás során. Kérlek, próbáld újra később.');
         }
     };
@@ -480,6 +630,12 @@ class AuthManager {
         }
 
         try {
+            // Show loading state
+            const resetForm = document.getElementById('resetPasswordFormElement');
+            const submitButton = resetForm?.querySelector('button[type="submit"]');
+            this.setButtonLoading(submitButton, true, submitButton?.textContent);
+            this.showLoadingOverlay('Jelszó frissítése...');
+
             console.log('Attempting to update password...');
             const { error } = await window.supabaseClient.auth.updateUser({
                 password: newPassword
@@ -487,9 +643,12 @@ class AuthManager {
 
             if (error) {
                 console.error('Password update error:', error);
+                this.hideLoadingOverlay();
+                this.setButtonLoading(submitButton, false);
                 this.showError('resetPasswordError', 'Hiba történt a jelszó frissítése során: ' + error.message);
             } else {
                 console.log('Password updated successfully');
+                this.hideLoadingOverlay();
                 this.showSuccess('resetPasswordSuccess', 'A jelszavad sikeresen frissítve! Most már bejelentkezhetsz.');
 
                 // Redirect to login form after a delay
@@ -497,10 +656,15 @@ class AuthManager {
                     this.showLoginForm();
                     // Clear the password field for security
                     document.getElementById('resetPassword').value = '';
+                    this.setButtonLoading(submitButton, false);
                 }, 3000);
             }
         } catch (error) {
             console.error('Unexpected error during password update:', error);
+            const resetForm = document.getElementById('resetPasswordFormElement');
+            const submitButton = resetForm?.querySelector('button[type="submit"]');
+            this.hideLoadingOverlay();
+            this.setButtonLoading(submitButton, false);
             this.showError('resetPasswordError', 'Váratlan hiba történt a jelszó frissítése során. Kérlek, próbáld újra később.');
         }
     };
@@ -513,10 +677,19 @@ class AuthManager {
                 throw new Error('Supabase client not initialized');
             }
 
+            // Show loading overlay
+            const overlay = document.getElementById('loadingOverlay');
+            const loadingMessage = document.getElementById('loadingMessage');
+            if (overlay && loadingMessage) {
+                loadingMessage.textContent = 'Kijelentkezés...';
+                overlay.classList.remove('hidden');
+            }
+
             console.log('Attempting to sign out...');
             const { error } = await window.supabaseClient.auth.signOut();
             if (error) {
                 console.error('Supabase signOut error:', error);
+                if (overlay) overlay.classList.add('hidden');
                 throw error;
             }
             console.log('Successfully signed out from Supabase');
@@ -527,9 +700,16 @@ class AuthManager {
 
             // Force redirect to landing page
             console.log('Redirecting to landing page...');
-            window.location.replace('landing.html');
+            if (loadingMessage) {
+                loadingMessage.textContent = 'Átirányítás...';
+            }
+            setTimeout(() => {
+                window.location.replace('landing.html');
+            }, 500);
         } catch (error) {
             console.error('Error during logout:', error);
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.classList.add('hidden');
             alert('Hiba történt a kijelentkezés során. Kérlek, próbáld újra.');
             throw error;
         }

@@ -302,6 +302,207 @@
             white-space: nowrap;
             border-width: 0;
         }
+
+        /* Loading Spinner Styles */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Inline Spinner - for buttons */
+        .spinner-inline {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Small Spinner */
+        .spinner-small {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-top-color: rgb(59, 130, 246);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .dark .spinner-small {
+            border-color: rgba(147, 197, 253, 0.3);
+            border-top-color: rgb(147, 197, 253);
+        }
+
+        /* Medium Spinner */
+        .spinner-medium {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-top-color: rgb(59, 130, 246);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .dark .spinner-medium {
+            border-color: rgba(147, 197, 253, 0.2);
+            border-top-color: rgb(147, 197, 253);
+        }
+
+        /* Large Spinner */
+        .spinner-large {
+            display: inline-block;
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(59, 130, 246, 0.15);
+            border-top-color: rgb(59, 130, 246);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .dark .spinner-large {
+            border-color: rgba(147, 197, 253, 0.15);
+            border-top-color: rgb(147, 197, 253);
+        }
+
+        /* Loading Overlay - Full page */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeInOverlay 0.3s ease-in;
+            backdrop-filter: blur(2px);
+        }
+
+        .dark .loading-overlay {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        @keyframes fadeInOverlay {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Loading Spinner Container */
+        .loading-spinner {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            min-width: 200px;
+        }
+
+        .dark .loading-spinner {
+            background: rgb(30, 41, 59);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .loading-spinner .spinner-large {
+            margin: 0 auto 1rem;
+            display: block;
+        }
+
+        .loading-spinner p {
+            margin: 0.5rem 0 0;
+            color: rgb(71, 85, 105);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .dark .loading-spinner p {
+            color: rgb(203, 213, 225);
+        }
+
+        /* Card Loading Spinner - for specific sections */
+        .card-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .card-loading::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: inherit;
+            z-index: 10;
+        }
+
+        .card-loading .spinner-medium {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 11;
+        }
+
+        .dark .card-loading::after {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Button Loading State */
+        button[data-loading="true"] {
+            position: relative;
+            color: transparent;
+        }
+
+        button[data-loading="true"]::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Minimum display time for spinners (prevents flickering) */
+        .loading-spinner.fade-in {
+            animation: fadeInOverlay 0.3s ease-in;
+        }
+
+        .loading-spinner.fade-out {
+            animation: fadeOutOverlay 0.3s ease-out;
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes fadeOutOverlay {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        /* Loading Text Animation */
+        .loading-text {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
     </style>
 </head>
 
@@ -705,6 +906,28 @@
             }
         });
     </script>
+    <!-- Loading Overlay Spinner -->
+    <div id="loadingOverlay" class="hidden loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner-large"></div>
+            <p id="loadingMessage" class="text-slate-600 dark:text-slate-300">Betöltés...</p>
+        </div>
+    </div>
+
+    <!-- Inline Spinner Template -->
+    <template id="inlineSpinnerTemplate">
+        <span class="spinner-inline" role="status" aria-label="Betöltés">
+            <span class="sr-only">Betöltés...</span>
+        </span>
+    </template>
+
+    <!-- Card Loading Spinner Template -->
+    <template id="cardSpinnerTemplate">
+        <div class="card-loading">
+            <div class="spinner-medium"></div>
+        </div>
+    </template>
+
 </body>
 
 </html>
