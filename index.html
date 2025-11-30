@@ -503,6 +503,238 @@
         .loading-text {
             animation: pulse 1.5s ease-in-out infinite;
         }
+
+        /* Toast Container - Fixed positioning */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 12px;
+            pointer-events: none;
+            max-width: 400px;
+        }
+
+        /* Mobile responsive positioning */
+        @media (max-width: 640px) {
+            .toast-container {
+                top: 20px;
+                right: 8px;
+                left: 8px;
+                max-width: calc(100vw - 16px);
+                align-items: stretch;
+            }
+        }
+
+        /* Base Toast Styling */
+        .toast {
+            pointer-events: auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+            padding: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            border-left: 4px solid;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 300px;
+            max-width: 400px;
+        }
+
+        @media (max-width: 640px) {
+            .toast {
+                min-width: 280px;
+                max-width: 100%;
+                padding: 12px;
+                font-size: 14px;
+            }
+        }
+
+        .toast:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15), 0 6px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Dark mode toast */
+        .dark .toast {
+            background: rgb(30, 41, 59);
+            color: rgb(241, 245, 249);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Toast Icon */
+        .toast-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        /* Toast Content */
+        .toast-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 1.4;
+            color: rgb(31, 41, 55);
+        }
+
+        .dark .toast-title {
+            color: rgb(241, 245, 249);
+        }
+
+        .toast-message {
+            font-size: 13px;
+            line-height: 1.5;
+            color: rgb(107, 114, 128);
+        }
+
+        .dark .toast-message {
+            color: rgb(203, 213, 225);
+        }
+
+        /* Toast Close Button */
+        .toast-close {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: rgb(156, 163, 175);
+            font-size: 14px;
+            transition: color 0.2s ease;
+        }
+
+        .toast-close:hover {
+            color: rgb(75, 85, 99);
+        }
+
+        .dark .toast-close:hover {
+            color: rgb(229, 231, 235);
+        }
+
+        /* Toast Type Variants */
+        .toast-success {
+            border-left-color: rgb(34, 197, 94);
+        }
+
+        .toast-success .toast-icon {
+            color: rgb(34, 197, 94);
+        }
+
+        .toast-error {
+            border-left-color: rgb(239, 68, 68);
+        }
+
+        .toast-error .toast-icon {
+            color: rgb(239, 68, 68);
+        }
+
+        .toast-warning {
+            border-left-color: rgb(245, 158, 11);
+        }
+
+        .toast-warning .toast-icon {
+            color: rgb(245, 158, 11);
+        }
+
+        .toast-info {
+            border-left-color: rgb(59, 130, 246);
+        }
+
+        .toast-info .toast-icon {
+            color: rgb(59, 130, 246);
+        }
+
+        /* Animations */
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        .toast-slide-in {
+            animation: slideInRight 0.3s ease-out forwards;
+        }
+
+        .toast-slide-out {
+            animation: slideOutRight 0.25s ease-in forwards;
+        }
+
+        .toast-fade-out {
+            animation: fadeOut 0.2s ease-out forwards;
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            .toast,
+            .toast-slide-in,
+            .toast-slide-out,
+            .toast-fade-out {
+                animation: none !important;
+                transition: none !important;
+            }
+
+            @keyframes slideInRight {
+                from, to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes slideOutRight {
+                from, to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes fadeOut {
+                from, to {
+                    opacity: 1;
+                }
+            }
+        }
     </style>
 </head>
 
@@ -737,6 +969,112 @@
             </form>
         </div>
 
+        <!-- Recurring Transaction Form Card (Hidden by default) -->
+        <div id="recurringFormCard" class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 p-4 sm:p-5 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fas fa-sync-alt text-violet-500 text-lg"></i>
+                    <span data-lang="newRecurring">Új ismétlődő tranzakció</span>
+                </h2>
+                <button id="closeRecurringForm" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="recurringForm" class="space-y-3">
+                <input type="hidden" id="recurringId">
+
+                <!-- Type selector -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2" data-lang="type">Típus</label>
+                    <div class="flex gap-2">
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="recurringType" value="expense" class="peer sr-only" checked>
+                            <div class="px-4 py-2.5 bg-gray-100 dark:bg-slate-700 border-2 border-gray-300 dark:border-slate-600 rounded-lg text-center font-medium text-sm peer-checked:bg-rose-500 peer-checked:border-rose-500 peer-checked:text-white transition-all">
+                                <i class="fas fa-arrow-down mr-1"></i> <span data-lang="expense">Kiadás</span>
+                            </div>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="recurringType" value="income" class="peer sr-only">
+                            <div class="px-4 py-2.5 bg-gray-100 dark:bg-slate-700 border-2 border-gray-300 dark:border-slate-600 rounded-lg text-center font-medium text-sm peer-checked:bg-emerald-500 peer-checked:border-emerald-500 peer-checked:text-white transition-all">
+                                <i class="fas fa-arrow-up mr-1"></i> <span data-lang="income">Bevétel</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Amount and Category -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5" data-lang="amount">Összeg (Ft)</label>
+                        <input type="number" id="recurringAmount" required placeholder="10,000"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-slate-700/70 dark:text-white text-sm transition-all">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5" data-lang="category">Kategória</label>
+                        <select id="recurringCategory" required
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-slate-700/70 dark:text-white text-sm transition-all">
+                            <option value="" data-lang="selectCategory">Válassz...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5" data-lang="description">Leírás</label>
+                    <input type="text" id="recurringDescription" required placeholder="pl. Havi lakbér"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-slate-700/70 dark:text-white text-sm transition-all">
+                </div>
+
+                <!-- Frequency -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5" data-lang="frequency">Gyakoriság</label>
+                    <select id="recurringFrequency" required
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-slate-700/70 dark:text-white text-sm transition-all">
+                        <option value="daily" data-lang="frequency_daily">Naponta (1 nap)</option>
+                        <option value="weekly" data-lang="frequency_weekly">Hetente (7 nap)</option>
+                        <option value="biweekly" data-lang="frequency_biweekly">Kéthetente (14 nap)</option>
+                        <option value="monthly" data-lang="frequency_monthly" selected>Havonta (30 nap)</option>
+                        <option value="quarterly" data-lang="frequency_quarterly">Negyedévente (90 nap)</option>
+                        <option value="semiannual" data-lang="frequency_semiannual">Félévente (180 nap)</option>
+                        <option value="annual" data-lang="frequency_annual">Évente (365 nap)</option>
+                    </select>
+                </div>
+
+                <!-- Start Date and End Date -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5" data-lang="startDate">Kezdő dátum</label>
+                        <input type="date" id="recurringStartDate" required
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-slate-700/70 dark:text-white text-sm transition-all">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                            <span data-lang="endDate">Befejező dátum</span>
+                            <span class="text-xs text-gray-500 ml-1" data-lang="optional">(opcionális)</span>
+                        </label>
+                        <input type="date" id="recurringEndDate"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-slate-700/70 dark:text-white text-sm transition-all">
+                    </div>
+                </div>
+
+                <!-- Submit buttons -->
+                <div class="flex gap-2">
+                    <button type="submit"
+                        class="flex-1 px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg hover:from-violet-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm sm:text-base flex items-center justify-center gap-2">
+                        <i class="fas fa-save"></i>
+                        <span data-lang="saveRecurring">Mentés</span>
+                    </button>
+                    <button type="button" id="cancelRecurringBtn"
+                        class="px-4 py-3 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 transition-all font-semibold text-sm sm:text-base">
+                        <span data-lang="cancel">Mégse</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
         <!-- Transaction List - Enhanced -->
         <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 p-4 sm:p-5">
             <!-- Header with action -->
@@ -795,6 +1133,27 @@
             <!-- Transaction list with better density -->
             <div id="recentExpensesList" class="space-y-2 max-h-96 overflow-y-auto">
                 <!-- Transactions will be populated here -->
+            </div>
+        </div>
+
+        <!-- Recurring Transactions Card -->
+        <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 p-4 sm:p-5">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fas fa-sync-alt text-violet-500 text-lg"></i>
+                    <span data-lang="recurringTransactions">Ismétlődő tranzakciók</span>
+                </h2>
+                <button id="addRecurringBtn"
+                    class="text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 text-sm font-medium flex items-center gap-1.5 transition-colors">
+                    <i class="fas fa-plus"></i>
+                    <span data-lang="addRecurring">Új ismétlődő</span>
+                </button>
+            </div>
+
+            <!-- Recurring List -->
+            <div id="recurringList" class="space-y-2 max-h-96 overflow-y-auto">
+                <!-- Rendered by RecurringManager.renderRecurringList() -->
             </div>
         </div>
 
