@@ -1665,6 +1665,15 @@ class FinanceApp {
 
         this.currentEditId = expenseId;
 
+        // Set transaction type radio button
+        const type = expense.type || 'expense';
+        const typeRadio = document.querySelector(`input[name="transactionType"][value="${type}"]`);
+        if (typeRadio) {
+            typeRadio.checked = true;
+            // Filter categories based on the expense type
+            this.filterCategoriesByType(type);
+        }
+
         // Fill form with expense data
         document.getElementById('expenseAmount').value = expense.amount;
         document.getElementById('expenseCategory').value = expense.category;
@@ -2069,8 +2078,8 @@ class FinanceApp {
         // Clear current options except the first (placeholder)
         select.innerHTML = `<option value="">${this.getText('selectCategory')}</option>`;
 
-        // Filter and add categories based on type
-        const filteredCategories = this.categories.filter(cat => cat.type === type || !cat.type);
+        // Filter and add categories based on type - show only categories that match the selected type
+        const filteredCategories = this.categories.filter(cat => cat.type === type);
 
         filteredCategories.forEach(cat => {
             const option = document.createElement('option');
@@ -2224,7 +2233,14 @@ class FinanceApp {
         typeRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
                 const type = e.target.value;
+                // Filter categories based on selected transaction type
+                this.filterCategoriesByType(type);
+            });
+        });
 
+        // Initialize with default expense type on page load
+        this.filterCategoriesByType('expense');
+    }
 
     /* ========================================
        Loading Spinner Helper Functions
@@ -2373,25 +2389,6 @@ class FinanceApp {
             }, delayTime);
         }
     };
-                // Filter categories based on type
-                this.filterCategoriesByType(type);
-
-                // Change submit button text and icon
-                if (submitButton) {
-                    if (type === 'income') {
-                        submitButton.textContent = this.getText('addIncome');
-                        submitButton.setAttribute('data-lang', 'addIncome');
-                    } else {
-                        submitButton.textContent = this.getText('addExpense');
-                        submitButton.setAttribute('data-lang', 'addExpense');
-                    }
-                }
-            });
-        });
-
-        // Initialize with default type (expense)
-        this.filterCategoriesByType('expense');
-    }
 }
 
 
