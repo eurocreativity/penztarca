@@ -10,6 +10,7 @@ class FinanceApp {
         this.categories = [];
         this.currentEditId = null;
         this.currentLanguage = 'hu';
+        this.recurringManager = null; // Initialized after auth
 
         // Search and filter state
         this.searchQuery = '';
@@ -126,7 +127,44 @@ class FinanceApp {
                 csvImportSuccess: 'CSV sikeresen importálva',
                 csvImportError: 'Hiba történt az importálás során',
                 csvExportSuccess: 'CSV sikeresen exportálva',
-                csvExportError: 'Hiba történt az exportálás során'
+                csvExportError: 'Hiba történt az exportálás során',
+                // Recurring Transactions - Section Labels
+                recurringTransactions: 'Ismétlődő Tranzakciók',
+                newRecurring: 'Új Ismétlődő',
+                activeRecurring: 'Aktív',
+                pausedRecurring: 'Szüneteltetett',
+                noRecurring: 'Nincs ismétlődő tranzakció',
+                // Recurring Transactions - Frequency Labels
+                daily: 'Napi',
+                weekly: 'Heti',
+                biweekly: 'Kéthetente',
+                monthly: 'Havi',
+                quarterly: 'Negyedéves',
+                semiannual: 'Féléves',
+                annual: 'Éves',
+                // Recurring Transactions - Form Labels
+                frequency: 'Gyakoriság',
+                startDate: 'Kezdő dátum',
+                endDate: 'Vég dátum',
+                nextOccurrence: 'Következő',
+                lastGenerated: 'Utoljára generálva',
+                hasEndDate: 'Van végdátum',
+                // Recurring Transactions - Action Labels
+                pause: 'Szüneteltetés',
+                resume: 'Folytatás',
+                editRecurring: 'Szerkesztés',
+                deleteRecurring: 'Törlés',
+                // Recurring Transactions - Messages
+                recurringSaved: 'Ismétlődő tranzakció sikeresen mentve',
+                recurringDeleted: 'Ismétlődő tranzakció törölve',
+                recurringPaused: 'Ismétlődő tranzakció szüneteltetve',
+                recurringResumed: 'Ismétlődő tranzakció folytatva',
+                transactionsGenerated: '{count} tranzakció automatikusan generálva',
+                deleteRecurringConfirm: 'Biztosan törölni szeretnéd ezt az ismétlődő tranzakciót?',
+                recurringGenerationError: 'Hiba az ismétlődő tranzakciók generálásakor',
+                until: 'Vége',
+                noEndDate: 'Nincs végdátum',
+                loadingRecurringError: 'Hiba az ismétlődő tranzakciók betöltésekor'
             },
             en: {
                 appTitle: 'Finance Tracker',
@@ -236,7 +274,44 @@ class FinanceApp {
                 csvImportSuccess: 'CSV imported successfully',
                 csvImportError: 'Error importing CSV',
                 csvExportSuccess: 'CSV exported successfully',
-                csvExportError: 'Error exporting CSV'
+                csvExportError: 'Error exporting CSV',
+                // Recurring Transactions - Section Labels
+                recurringTransactions: 'Recurring Transactions',
+                newRecurring: 'New Recurring',
+                activeRecurring: 'Active',
+                pausedRecurring: 'Paused',
+                noRecurring: 'No recurring transactions',
+                // Recurring Transactions - Frequency Labels
+                daily: 'Daily',
+                weekly: 'Weekly',
+                biweekly: 'Biweekly',
+                monthly: 'Monthly',
+                quarterly: 'Quarterly',
+                semiannual: 'Semi-annual',
+                annual: 'Annual',
+                // Recurring Transactions - Form Labels
+                frequency: 'Frequency',
+                startDate: 'Start Date',
+                endDate: 'End Date',
+                nextOccurrence: 'Next',
+                lastGenerated: 'Last Generated',
+                hasEndDate: 'Has End Date',
+                // Recurring Transactions - Action Labels
+                pause: 'Pause',
+                resume: 'Resume',
+                editRecurring: 'Edit',
+                deleteRecurring: 'Delete',
+                // Recurring Transactions - Messages
+                recurringSaved: 'Recurring transaction saved successfully',
+                recurringDeleted: 'Recurring transaction deleted',
+                recurringPaused: 'Recurring transaction paused',
+                recurringResumed: 'Recurring transaction resumed',
+                transactionsGenerated: '{count} transactions auto-generated',
+                deleteRecurringConfirm: 'Delete this recurring transaction?',
+                recurringGenerationError: 'Error generating recurring transactions',
+                until: 'Until',
+                noEndDate: 'No end date',
+                loadingRecurringError: 'Error loading recurring transactions'
             }
         };
 
@@ -430,6 +505,14 @@ class FinanceApp {
             console.log('Loading user data...');
             await this.loadUserData();
 
+            // Initialize Recurring Manager
+            console.log('Initializing RecurringManager...');
+            this.recurringManager = new RecurringManager(this);
+            await this.recurringManager.loadRecurring();
+            this.recurringManager.renderRecurringList();
+            await this.recurringManager.checkAndGenerate();
+            this.recurringManager.startAutoCheck();
+
             // Setup UI
             console.log('Setting up UI...');
             this.setupEventListeners();
@@ -530,6 +613,10 @@ class FinanceApp {
                 logoutBtn.addEventListener('click', async () => {
                     if (confirm('Biztosan kilépsz?')) {
                         try {
+                            // Stop recurring auto-check before logout
+                            if (this.recurringManager) {
+                                this.recurringManager.stopAutoCheck();
+                            }
                             await AuthManager.logout();
                         } catch (error) {
                             console.error('Hiba történt a kijelentkezés során:', error);
@@ -2177,6 +2264,61 @@ class FinanceApp {
         });
     }
 
+    /**
+     * Filter category dropdown for recurring transaction form based on type
+     * @param {string} type - 'expense' or 'income'
+     */
+    populateRecurringCategories(type) {
+        const select = document.getElementById('recurringCategory');
+        if (!select) return;
+
+        select.innerHTML = `<option value="">${this.getText('selectCategory')}</option>`;
+
+        const filteredCategories = this.categories.filter(cat => cat.type === type);
+
+        filteredCategories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+            select.appendChild(option);
+        });
+    }
+
+    /**
+     * Handle recurring transaction form submission
+     * @param {Event} e - Form submit event
+     */
+    async handleRecurringSubmit(e) {
+        e.preventDefault();
+
+        const formData = {
+            id: document.getElementById('recurringId').value || null,
+            amount: document.getElementById('recurringAmount').value,
+            category_id: document.getElementById('recurringCategory').value,
+            description: document.getElementById('recurringDescription').value,
+            type: document.querySelector('input[name="recurringType"]:checked').value,
+            frequency: document.getElementById('recurringFrequency').value,
+            start_date: document.getElementById('recurringStartDate').value,
+            end_date: document.getElementById('recurringEndDate').value || null
+        };
+
+        // Validate form data
+        if (!formData.amount || !formData.category_id || !formData.description || !formData.start_date) {
+            this.toastManager.showError(this.getText('missingAmount'));
+            return;
+        }
+
+        const success = await this.recurringManager.saveRecurring(formData);
+        if (success) {
+            this.recurringManager.clearForm();
+            // Hide form
+            const formCard = document.getElementById('recurringFormCard');
+            if (formCard) {
+                formCard.classList.add('hidden');
+            }
+        }
+    }
+
     // Search and filter methods
     filterExpenses(expenses) {
         return expenses.filter(expense => {
@@ -2738,6 +2880,477 @@ class ToastManager {
      */
     setLanguage(language) {
         this.language = language;
+    }
+}
+
+/**
+ * RecurringManager - Manages recurring transactions
+ * Handles creation, deletion, pausing/resuming, and automatic generation of recurring transactions
+ * Integrates with Supabase backend and FinanceApp for consistent data management
+ */
+class RecurringManager {
+    constructor(app) {
+        this.app = app;
+        this.recurring = [];
+        this.autoCheckInterval = null;
+    }
+
+    /**
+     * Load all recurring transactions for current user
+     * @returns {Promise<void>}
+     */
+    async loadRecurring() {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('recurring_transactions')
+                .select('*')
+                .eq('user_id', this.app.currentUser.id)
+                .order('next_occurrence', { ascending: true });
+
+            if (error) throw error;
+
+            this.recurring = data || [];
+        } catch (error) {
+            console.error('Error loading recurring transactions:', error);
+            this.app.toastManager.showError(this.app.getText('loadingRecurringError'));
+        }
+    }
+
+    /**
+     * Save recurring transaction (create or update)
+     * @param {Object} data - Recurring transaction data
+     * @returns {Promise<boolean>} Success status
+     */
+    async saveRecurring(data) {
+        try {
+            const recurringData = {
+                user_id: this.app.currentUser.id,
+                amount: parseFloat(data.amount),
+                category_id: data.category_id,
+                description: data.description,
+                type: data.type,
+                frequency: data.frequency,
+                start_date: data.start_date,
+                end_date: data.end_date || null,
+                next_occurrence: data.next_occurrence || data.start_date,
+                is_active: data.is_active !== undefined ? data.is_active : true,
+                updated_at: new Date().toISOString()
+            };
+
+            let result;
+            if (data.id) {
+                // Update existing
+                result = await window.supabaseClient
+                    .from('recurring_transactions')
+                    .update(recurringData)
+                    .eq('id', data.id)
+                    .eq('user_id', this.app.currentUser.id);
+            } else {
+                // Create new
+                result = await window.supabaseClient
+                    .from('recurring_transactions')
+                    .insert([recurringData]);
+            }
+
+            if (result.error) throw result.error;
+
+            await this.loadRecurring();
+            this.app.toastManager.showSuccess(this.app.getText('recurringSaved'));
+            return true;
+        } catch (error) {
+            console.error('Error saving recurring transaction:', error);
+            this.app.toastManager.showError(this.app.getText('saveError'));
+            return false;
+        }
+    }
+
+    /**
+     * Delete recurring transaction
+     * @param {string} id - Recurring transaction ID
+     * @returns {Promise<boolean>} Success status
+     */
+    async deleteRecurring(id) {
+        try {
+            const { error } = await window.supabaseClient
+                .from('recurring_transactions')
+                .delete()
+                .eq('id', id)
+                .eq('user_id', this.app.currentUser.id);
+
+            if (error) throw error;
+
+            await this.loadRecurring();
+            this.app.toastManager.showSuccess(this.app.getText('recurringDeleted'));
+            return true;
+        } catch (error) {
+            console.error('Error deleting recurring transaction:', error);
+            this.app.toastManager.showError(this.app.getText('saveError'));
+            return false;
+        }
+    }
+
+    /**
+     * Toggle active status (pause/resume)
+     * @param {string} id - Recurring transaction ID
+     * @returns {Promise<boolean>} Success status
+     */
+    async toggleActive(id) {
+        try {
+            const recurring = this.recurring.find(r => r.id === id);
+            if (!recurring) return false;
+
+            const { error } = await window.supabaseClient
+                .from('recurring_transactions')
+                .update({
+                    is_active: !recurring.is_active,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', id)
+                .eq('user_id', this.app.currentUser.id);
+
+            if (error) throw error;
+
+            await this.loadRecurring();
+            const status = !recurring.is_active ? 'recurringResumed' : 'recurringPaused';
+            this.app.toastManager.showSuccess(this.app.getText(status));
+            return true;
+        } catch (error) {
+            console.error('Error toggling recurring transaction:', error);
+            this.app.toastManager.showError(this.app.getText('saveError'));
+            return false;
+        }
+    }
+
+    /**
+     * Check for due recurring transactions and generate them
+     * Called on app init and periodically
+     * @returns {Promise<number>} Number of transactions generated
+     */
+    async checkAndGenerate() {
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const dueRecurring = this.recurring.filter(r => {
+                if (!r.is_active) return false;
+
+                const nextDate = new Date(r.next_occurrence);
+                nextDate.setHours(0, 0, 0, 0);
+
+                // Check if due today or overdue
+                return nextDate <= today;
+            });
+
+            let generatedCount = 0;
+
+            for (const recurring of dueRecurring) {
+                const success = await this.generateTransaction(recurring.id);
+                if (success) generatedCount++;
+            }
+
+            if (generatedCount > 0) {
+                await this.app.loadExpenses();
+                this.app.toastManager.showSuccess(
+                    this.app.getText('transactionsGenerated').replace('{count}', generatedCount)
+                );
+            }
+
+            return generatedCount;
+        } catch (error) {
+            console.error('Error checking recurring transactions:', error);
+            return 0;
+        }
+    }
+
+    /**
+     * Generate actual transaction from recurring pattern
+     * @param {string} recurringId - Recurring transaction ID
+     * @returns {Promise<boolean>} Success status
+     */
+    async generateTransaction(recurringId) {
+        try {
+            const recurring = this.recurring.find(r => r.id === recurringId);
+            if (!recurring) return false;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Create the actual expense/income transaction
+            const transaction = {
+                user_id: this.app.currentUser.id,
+                amount: parseFloat(recurring.amount),
+                category_id: recurring.category_id,
+                description: `[Recurring] ${recurring.description}`,
+                type: recurring.type,
+                date: recurring.next_occurrence,
+                created_at: new Date().toISOString()
+            };
+
+            const { error: insertError } = await window.supabaseClient
+                .from('expenses')
+                .insert([transaction]);
+
+            if (insertError) throw insertError;
+
+            // Calculate next occurrence
+            const nextDate = this.calculateNextOccurrence(
+                recurring.next_occurrence,
+                recurring.frequency
+            );
+
+            // Check if we should continue (end_date check)
+            const shouldContinue = !recurring.end_date || new Date(nextDate) <= new Date(recurring.end_date);
+
+            // Update recurring transaction
+            const updateData = {
+                last_generated_date: recurring.next_occurrence,
+                next_occurrence: nextDate,
+                updated_at: new Date().toISOString()
+            };
+
+            // If past end date, deactivate
+            if (!shouldContinue) {
+                updateData.is_active = false;
+            }
+
+            const { error: updateError } = await window.supabaseClient
+                .from('recurring_transactions')
+                .update(updateData)
+                .eq('id', recurringId);
+
+            if (updateError) throw updateError;
+
+            await this.loadRecurring();
+            return true;
+        } catch (error) {
+            console.error('Error generating transaction:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Calculate next occurrence date based on frequency
+     * @param {string} currentDate - Current occurrence date (YYYY-MM-DD)
+     * @param {string} frequency - Frequency pattern
+     * @returns {string} Next occurrence date (YYYY-MM-DD)
+     */
+    calculateNextOccurrence(currentDate, frequency) {
+        const date = new Date(currentDate);
+
+        const intervals = {
+            daily: 1,
+            weekly: 7,
+            biweekly: 14,
+            monthly: 30,
+            quarterly: 90,
+            semiannual: 180,
+            annual: 365
+        };
+
+        const daysToAdd = intervals[frequency] || 30;
+        date.setDate(date.getDate() + daysToAdd);
+
+        // Return in YYYY-MM-DD format
+        return date.toISOString().split('T')[0];
+    }
+
+    /**
+     * Start automatic checking (every 6 hours)
+     * Called on app initialization
+     */
+    startAutoCheck() {
+        // Check immediately on start
+        this.checkAndGenerate();
+
+        // Check every 6 hours (21600000 ms)
+        this.autoCheckInterval = setInterval(() => {
+            this.checkAndGenerate();
+        }, 21600000);
+    }
+
+    /**
+     * Stop automatic checking
+     */
+    stopAutoCheck() {
+        if (this.autoCheckInterval) {
+            clearInterval(this.autoCheckInterval);
+            this.autoCheckInterval = null;
+        }
+    }
+
+    /**
+     * Render recurring transactions list in UI
+     */
+    renderRecurringList() {
+        const container = document.getElementById('recurringList');
+        if (!container) return;
+
+        if (this.recurring.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-sync-alt text-4xl mb-2 opacity-30"></i>
+                    <p>${this.app.getText('noRecurring')}</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Separate active and paused
+        const active = this.recurring.filter(r => r.is_active);
+        const paused = this.recurring.filter(r => !r.is_active);
+
+        let html = '';
+
+        if (active.length > 0) {
+            html += `<div class="mb-4">
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    ${this.app.getText('activeRecurring')}
+                </h3>
+                ${active.map(r => this.renderRecurringItem(r)).join('')}
+            </div>`;
+        }
+
+        if (paused.length > 0) {
+            html += `<div>
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    ${this.app.getText('pausedRecurring')}
+                </h3>
+                ${paused.map(r => this.renderRecurringItem(r)).join('')}
+            </div>`;
+        }
+
+        container.innerHTML = html;
+    }
+
+    /**
+     * Render individual recurring transaction item
+     * @param {Object} recurring - Recurring transaction object
+     * @returns {string} HTML string
+     */
+    renderRecurringItem(recurring) {
+        const category = this.app.categories.find(c => c.id === recurring.category_id);
+        const categoryName = category ? category.name : 'Unknown';
+        const categoryIcon = category ? category.icon : 'fa-question';
+
+        const typeClass = recurring.type === 'expense' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400';
+        const typeIcon = recurring.type === 'expense' ? 'fa-arrow-down' : 'fa-arrow-up';
+
+        const statusBadge = recurring.is_active
+            ? `<span class="px-2 py-1 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded">${this.app.getText('activeRecurring')}</span>`
+            : `<span class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded">${this.app.getText('pausedRecurring')}</span>`;
+
+        const nextOccurrence = new Date(recurring.next_occurrence).toLocaleDateString(this.app.currentLanguage);
+        const endDateText = recurring.end_date
+            ? `${this.app.getText('until')} ${new Date(recurring.end_date).toLocaleDateString(this.app.currentLanguage)}`
+            : this.app.getText('noEndDate');
+
+        return `
+            <div class="flex items-center justify-between p-3 mb-2 bg-white dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600 hover:shadow-md transition-shadow">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <i class="fas ${categoryIcon} text-gray-500"></i>
+                        <span class="font-medium text-gray-900 dark:text-white">${recurring.description}</span>
+                        ${statusBadge}
+                    </div>
+                    <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                        <span class="${typeClass} font-semibold">
+                            <i class="fas ${typeIcon} mr-1"></i>${recurring.amount.toLocaleString()} Ft
+                        </span>
+                        <span><i class="fas fa-tag mr-1"></i>${categoryName}</span>
+                        <span><i class="fas fa-sync-alt mr-1"></i>${this.app.getText(this.getFrequencyLabel(recurring.frequency))}</span>
+                        <span><i class="fas fa-calendar mr-1"></i>${nextOccurrence}</span>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                        ${endDateText}
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.app.recurringManager.toggleActive('${recurring.id}')"
+                        class="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        title="${recurring.is_active ? this.app.getText('pause') : this.app.getText('resume')}">
+                        <i class="fas ${recurring.is_active ? 'fa-pause' : 'fa-play'}"></i>
+                    </button>
+                    <button onclick="window.app.recurringManager.editRecurring('${recurring.id}')"
+                        class="p-2 text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                        title="${this.app.getText('editRecurring')}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="window.app.recurringManager.confirmDelete('${recurring.id}')"
+                        class="p-2 text-gray-600 dark:text-gray-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                        title="${this.app.getText('deleteRecurring')}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Get frequency label for display
+     * @param {string} frequency - Frequency value
+     * @returns {string} Translation key for frequency
+     */
+    getFrequencyLabel(frequency) {
+        const frequencyMap = {
+            'daily': 'daily',
+            'weekly': 'weekly',
+            'biweekly': 'biweekly',
+            'monthly': 'monthly',
+            'quarterly': 'quarterly',
+            'semiannual': 'semiannual',
+            'annual': 'annual'
+        };
+        return frequencyMap[frequency] || 'monthly';
+    }
+
+    /**
+     * Edit recurring transaction
+     * @param {string} id - Recurring transaction ID
+     */
+    editRecurring(id) {
+        const recurring = this.recurring.find(r => r.id === id);
+        if (!recurring) return;
+
+        // Populate form with existing data
+        document.getElementById('recurringId').value = recurring.id;
+        document.getElementById('recurringAmount').value = recurring.amount;
+        document.getElementById('recurringCategory').value = recurring.category_id;
+        document.getElementById('recurringDescription').value = recurring.description;
+        document.querySelector(`input[name="recurringType"][value="${recurring.type}"]`).checked = true;
+        document.getElementById('recurringFrequency').value = recurring.frequency;
+        document.getElementById('recurringStartDate').value = recurring.start_date;
+        document.getElementById('recurringEndDate').value = recurring.end_date || '';
+
+        // Populate categories for the selected type
+        this.app.populateRecurringCategories(recurring.type);
+
+        // Scroll to form
+        const formCard = document.getElementById('recurringFormCard');
+        if (formCard) {
+            formCard.classList.remove('hidden');
+            formCard.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    /**
+     * Confirm deletion with user
+     * @param {string} id - Recurring transaction ID
+     */
+    confirmDelete(id) {
+        if (confirm(this.app.getText('deleteRecurringConfirm'))) {
+            this.deleteRecurring(id);
+        }
+    }
+
+    /**
+     * Clear recurring form
+     */
+    clearForm() {
+        const form = document.getElementById('recurringForm');
+        if (form) {
+            form.reset();
+            document.getElementById('recurringId').value = '';
+        }
     }
 }
 
