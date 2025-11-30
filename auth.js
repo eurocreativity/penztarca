@@ -316,6 +316,13 @@ class AuthManager {
             }
 
             console.log('Starting registration process...');
+
+            // Use production URL for email confirmation
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const redirectUrl = isLocalhost
+                ? 'https://penztarca.netlify.app/auth.html?verify=true'
+                : window.location.origin + '/auth.html?verify=true';
+
             const { data, error } = await window.supabaseClient.auth.signUp({
                 email: email,
                 password: password,
@@ -323,7 +330,7 @@ class AuthManager {
                     data: {
                         name: name
                     },
-                    emailRedirectTo: window.location.origin + '/auth.html?verify=true'
+                    emailRedirectTo: redirectUrl
                 }
             });
 
@@ -443,11 +450,14 @@ class AuthManager {
         }
 
         try {
+            // Use production URL for password reset
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const redirectTo = isLocalhost
+                ? 'https://penztarca.netlify.app/auth.html'
+                : new URL('/auth.html', window.location.origin).toString();
+
             console.log('Current URL:', window.location.href);
             console.log('Origin:', window.location.origin);
-            console.log('Redirect URL:', window.location.origin + '/auth.html?type=recovery');
-
-            const redirectTo = new URL('/auth.html', window.location.origin).toString();
             console.log('Final redirect URL:', redirectTo);
 
             console.log('Sending password reset email to:', email);
