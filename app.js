@@ -90,7 +90,21 @@ class FinanceApp {
                 filterMonth: 'Ez a hónap',
                 filterLastMonth: 'Előző hónap',
                 filterYear: 'Ez az év',
-                clearFilters: 'Szűrők törlése'
+                clearFilters: 'Szűrők törlése',
+                loading: 'Betöltés...',
+                saving: 'Mentés...',
+                deleting: 'Törlés...',
+                loadingApp: 'Alkalmazás betöltése...',
+                loadingExpenses: 'Kiadások betöltése...',
+                loadingCategories: 'Kategóriák betöltése...',
+                savingExpense: 'Kiadás mentése...',
+                deletingExpense: 'Kiadás törlése...',
+                savingBudget: 'Költségvetés mentése...',
+                savingCategory: 'Kategória mentése...',
+                deletingCategory: 'Kategória törlése...',
+                updatingCharts: 'Diagramok frissítése...',
+                exportingCsv: 'Exportálás folyamatban...',
+                importingCsv: 'Importálás folyamatban...'
             },
             en: {
                 appTitle: 'Finance Tracker',
@@ -164,16 +178,106 @@ class FinanceApp {
                 filterMonth: 'This month',
                 filterLastMonth: 'Last month',
                 filterYear: 'This year',
-                clearFilters: 'Clear filters'
+                clearFilters: 'Clear filters',
+                loading: 'Loading...',
+                saving: 'Saving...',
+                deleting: 'Deleting...',
+                loadingApp: 'Loading application...',
+                loadingExpenses: 'Loading expenses...',
+                loadingCategories: 'Loading categories...',
+                savingExpense: 'Saving expense...',
+                deletingExpense: 'Deleting expense...',
+                savingBudget: 'Saving budget...',
+                savingCategory: 'Saving category...',
+                deletingCategory: 'Deleting category...',
+                updatingCharts: 'Updating charts...',
+                exportingCsv: 'Exporting...',
+                importingCsv: 'Importing...'
             }
         };
 
         this.init();
     }
 
+    // Loading state helper methods
+    showLoadingOverlay(message = '') {
+        let overlay = document.getElementById('loadingOverlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'loadingOverlay';
+            overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden';
+            overlay.innerHTML = `
+                <div class="bg-white dark:bg-stone-800 rounded-2xl p-8 shadow-2xl flex flex-col items-center">
+                    <div class="w-12 h-12 border-4 border-primary-400 border-t-primary-600 rounded-full animate-spin mb-4"></div>
+                    <p id="loadingMessage" class="text-center text-gray-700 dark:text-gray-300">${message || this.getText('loading')}</p>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        } else {
+            overlay.classList.remove('hidden');
+            const msgEl = document.getElementById('loadingMessage');
+            if (msgEl) msgEl.textContent = message || this.getText('loading');
+        }
+    }
+
+    hideLoadingOverlay() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.classList.add('hidden');
+    }
+
+    setButtonLoading(button, isLoading) {
+        if (!button) return;
+
+        const originalText = button.getAttribute('data-original-text') || button.textContent;
+        if (!button.hasAttribute('data-original-text')) {
+            button.setAttribute('data-original-text', originalText);
+        }
+
+        if (isLoading) {
+            button.disabled = true;
+            button.classList.add('opacity-75', 'cursor-not-allowed');
+            button.innerHTML = `<span class="inline-flex items-center gap-2">
+                <span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                ${this.getText('saving')}
+            </span>`;
+        } else {
+            button.disabled = false;
+            button.classList.remove('opacity-75', 'cursor-not-allowed');
+            button.textContent = originalText;
+        }
+    }
+
+    showSkeletonLoader(containerId, count = 3) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const skeletonHTML = Array(count).fill(`
+            <div class="animate-pulse">
+                <div class="h-20 bg-gray-200 dark:bg-stone-700 rounded-xl mb-3"></div>
+            </div>
+        `).join('');
+
+        container.innerHTML = skeletonHTML;
+    }
+
+    async ensureMinLoadingTime(promise, minTime = 300) {
+        const startTime = Date.now();
+        const result = await promise;
+        const elapsedTime = Date.now() - startTime;
+
+        if (elapsedTime < minTime) {
+            await new Promise(resolve => setTimeout(resolve, minTime - elapsedTime));
+        }
+
+        return result;
+    }
+
+
     async init() {
         try {
             console.log('Initializing app...');
+
+            this.showLoadingOverlay(this.getText("loadingApp"));
 
             // FIRST: Immediately check for existing session
             console.log('Step 1: Checking for immediate session...');
@@ -296,7 +400,8 @@ class FinanceApp {
                 }
             });
 
-            console.log('Initialization complete');
+            this.hideLoadingOverlay();
+                        console.log('Initialization complete');
         } catch (error) {
             console.error('Error during initialization:', error);
             window.location.href = 'auth.html';
@@ -799,12 +904,14 @@ class FinanceApp {
         const color = document.getElementById('categoryColorInput').value;
         const icon = document.getElementById('categoryIconInput').value;
         const type = document.querySelector('input[name="categoryType"]:checked').value;
+        const saveBtn = form.querySelector('button[type="submit"]');
 
         if (!name) {
             alert('Kérlek add meg a kategória nevét!');
             return;
         }
 
+        this.setButtonLoading(saveBtn, true);
         try {
             const categoryData = {
                 user_id: this.currentUser.id,
@@ -844,7 +951,9 @@ class FinanceApp {
             this.hideCategoryEditForm();
             this.renderCategoriesList();
             this.updateCategorySelectors();
+            this.setButtonLoading(saveBtn, false);
         } catch (error) {
+            this.setButtonLoading(saveBtn, false);
             console.error('Error saving category:', error);
             alert(this.getText('saveError'));
         }
@@ -867,6 +976,11 @@ class FinanceApp {
         }
 
         if (confirm('Biztosan törölni szeretnéd ezt a kategóriát?')) {
+            const deleteBtn = event?.target;
+            if (deleteBtn) {
+                deleteBtn.disabled = true;
+                deleteBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
             try {
                 const { error } = await window.supabaseClient
                     .from('categories')
@@ -936,6 +1050,8 @@ class FinanceApp {
             return;
         }
 
+        const saveBtn = document.getElementById('setBudgetBtn');
+        this.setButtonLoading(saveBtn, true);
         try {
             const { error } = await window.supabaseClient
                 .from('profiles')
@@ -947,7 +1063,9 @@ class FinanceApp {
             this.budget = amount;
             this.updateBudgetDisplay();
             budgetInput.value = '';
+            this.setButtonLoading(saveBtn, false);
         } catch (error) {
+            this.setButtonLoading(saveBtn, false);
             console.error('Error saving budget:', error);
             console.error('Error code:', error.code);
             console.error('Error message:', error.message);
@@ -962,6 +1080,7 @@ class FinanceApp {
         const descriptionInput = document.getElementById('expenseDescription');
         const dateInput = document.getElementById('expenseDate');
         const typeRadio = document.querySelector('input[name="transactionType"]:checked');
+        const saveBtn = document.getElementById('expenseForm').querySelector('button[type="submit"]');
 
         const amount = parseFloat(amountInput.value);
         const categoryId = parseInt(categorySelect.value); // Ensure numeric ID
@@ -990,6 +1109,7 @@ class FinanceApp {
             return;
         }
 
+        this.setButtonLoading(saveBtn, true);
         try {
             const expenseData = {
                 user_id: this.currentUser.id,
@@ -1052,6 +1172,7 @@ class FinanceApp {
 
             // Update UI
             this.updateUI();
+            this.setButtonLoading(saveBtn, false);
 
             // Show success message
             const messageDiv = document.createElement('div');
@@ -1061,6 +1182,7 @@ class FinanceApp {
             setTimeout(() => messageDiv.remove(), 3000);
 
         } catch (error) {
+            this.setButtonLoading(saveBtn, false);
             console.error('Error saving expense:', error);
             const errorMessage = this.currentLanguage === 'hu'
                 ? 'Hiba történt a kiadás mentése során. Kérlek, próbáld újra.'
@@ -1279,9 +1401,18 @@ class FinanceApp {
     }
 
     updateCharts() {
+        const chartContainers = document.querySelectorAll('[id*="Chart"]');
+        chartContainers.forEach(chart => {
+            chart.style.opacity = '0.6';
+        });
+        
         this.updateCategoryChart();
         this.updateIncomeCategoryChart();
         this.updateTrendChart();
+        
+        chartContainers.forEach(chart => {
+            chart.style.opacity = '1';
+        });
     }
 
     updateCategoryChart() {
@@ -1549,6 +1680,11 @@ class FinanceApp {
     }
     async deleteExpense(expenseId) {
         if (confirm(this.getText('deleteConfirm'))) {
+            const deleteBtn = event?.target;
+            if (deleteBtn) {
+                deleteBtn.disabled = true;
+                deleteBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
             try {
                 const { error } = await window.supabaseClient
                     .from('expenses')
@@ -1737,6 +1873,8 @@ class FinanceApp {
     }
 
     exportToCSV() {
+        const exportBtn = document.querySelector('[data-lang="exportCsv"]')?.closest('button') || document.getElementById('exportCsvBtn');
+        
         // Header
         const headers = ['Date', 'Amount', 'Type', 'Category', 'Description'];
 
@@ -1765,6 +1903,10 @@ class FinanceApp {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        
+        if (exportBtn) {
+            setTimeout(() => this.setButtonLoading(exportBtn, false), 300);
+        }
     }
 
     importFromCSV(event) {
@@ -1776,6 +1918,7 @@ class FinanceApp {
             return;
         }
 
+        const importBtn = document.getElementById('importCsvBtn');
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
@@ -1812,6 +1955,7 @@ class FinanceApp {
 
                 if (newExpenses.length > 0) {
                     if (confirm(`${newExpenses.length} tranzakció importálása. Folytatod?`)) {
+                        this.showLoadingOverlay(this.getText('importingCsv'));
                         const { data: insertedExpenses, error } = await window.supabaseClient
                             .from('expenses')
                             .insert(newExpenses)
@@ -2081,6 +2225,154 @@ class FinanceApp {
             radio.addEventListener('change', (e) => {
                 const type = e.target.value;
 
+
+    /* ========================================
+       Loading Spinner Helper Functions
+       ======================================== */
+
+    /**
+     * Show loading spinner on a specific element or full page overlay
+     * @param {string} elementId - ID of element to show spinner on, or 'overlay' for full-page
+     * @param {string} type - Type of spinner: 'inline', 'overlay', or 'card'
+     * @param {string} message - Optional message to display (for overlay only)
+     */
+    showLoading = (elementId = 'overlay', type = 'overlay', message = 'Betöltés...') => {
+        if (type === 'overlay') {
+            const overlay = document.getElementById('loadingOverlay');
+            const loadingMessage = document.getElementById('loadingMessage');
+            if (overlay) {
+                if (loadingMessage) {
+                    loadingMessage.textContent = message;
+                }
+                overlay.classList.remove('hidden');
+                // Store timestamp to ensure minimum display time
+                overlay.dataset.showTime = Date.now();
+            }
+        } else if (type === 'card') {
+            const element = document.getElementById(elementId);
+            if (element && !element.classList.contains('card-loading')) {
+                element.classList.add('card-loading');
+                const spinner = document.createElement('div');
+                spinner.className = 'spinner-medium';
+                element.appendChild(spinner);
+            }
+        } else if (type === 'inline') {
+            const element = document.getElementById(elementId);
+            if (element) {
+                const spinner = document.createElement('span');
+                spinner.className = 'spinner-inline';
+                spinner.setAttribute('role', 'status');
+                spinner.setAttribute('aria-label', message);
+                element.appendChild(spinner);
+            }
+        }
+    };
+
+    /**
+     * Hide loading spinner on a specific element or overlay
+     * @param {string} elementId - ID of element or 'overlay' for full-page overlay
+     * @param {number} minDisplayTime - Minimum time to display spinner in milliseconds (default: 300ms)
+     */
+    hideLoading = (elementId = 'overlay', minDisplayTime = 300) => {
+        if (elementId === 'overlay') {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                const showTime = overlay.dataset.showTime ? parseInt(overlay.dataset.showTime) : Date.now();
+                const elapsedTime = Date.now() - showTime;
+                const delayTime = Math.max(0, minDisplayTime - elapsedTime);
+                
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    delete overlay.dataset.showTime;
+                }, delayTime);
+            }
+        } else {
+            const element = document.getElementById(elementId);
+            if (element) {
+                // Remove spinner from card
+                if (element.classList.contains('card-loading')) {
+                    element.classList.remove('card-loading');
+                    const spinner = element.querySelector('.spinner-medium');
+                    if (spinner) spinner.remove();
+                }
+                
+                // Remove spinner from inline element
+                const inlineSpinner = element.querySelector('.spinner-inline');
+                if (inlineSpinner) inlineSpinner.remove();
+            }
+        }
+    };
+
+    /**
+     * Set button to loading state
+     * @param {HTMLElement} buttonElement - Button element to set loading state
+     * @param {boolean} loading - True to enable loading, false to disable
+     * @param {string} loadingText - Optional text to show during loading (default shows spinner only)
+     */
+    setButtonLoading = (buttonElement, loading = true, loadingText = null) => {
+        if (!buttonElement) return;
+
+        if (loading) {
+            buttonElement.setAttribute('data-loading', 'true');
+            buttonElement.disabled = true;
+            
+            // Store original text if not already stored
+            if (!buttonElement.dataset.originalText) {
+                buttonElement.dataset.originalText = buttonElement.textContent;
+            }
+            
+            // Set loading text if provided
+            if (loadingText) {
+                buttonElement.textContent = loadingText;
+            }
+        } else {
+            buttonElement.removeAttribute('data-loading');
+            buttonElement.disabled = false;
+            
+            // Restore original text
+            if (buttonElement.dataset.originalText) {
+                buttonElement.textContent = buttonElement.dataset.originalText;
+                delete buttonElement.dataset.originalText;
+            }
+        }
+    };
+
+    /**
+     * Show loading spinner with fade animation
+     * @param {string} elementId - Element ID
+     */
+    showLoadingWithAnimation = (elementId = 'overlay') => {
+        const overlay = document.getElementById(elementId);
+        if (overlay) {
+            overlay.classList.remove('hidden');
+            overlay.classList.add('fade-in');
+            overlay.dataset.showTime = Date.now();
+        }
+    };
+
+    /**
+     * Hide loading spinner with fade animation
+     * @param {string} elementId - Element ID
+     * @param {number} minDisplayTime - Minimum display time
+     */
+    hideLoadingWithAnimation = (elementId = 'overlay', minDisplayTime = 300) => {
+        const overlay = document.getElementById(elementId);
+        if (overlay) {
+            const showTime = overlay.dataset.showTime ? parseInt(overlay.dataset.showTime) : Date.now();
+            const elapsedTime = Date.now() - showTime;
+            const delayTime = Math.max(0, minDisplayTime - elapsedTime);
+            
+            setTimeout(() => {
+                overlay.classList.remove('fade-in');
+                overlay.classList.add('fade-out');
+                
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    overlay.classList.remove('fade-out');
+                }, 300);
+            }, delayTime);
+        }
+    };
                 // Filter categories based on type
                 this.filterCategoriesByType(type);
 

@@ -56,6 +56,167 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+
+        /* Loading Spinner Styles */
+
+        /* Enhanced Loading Spinner Styles */
+        @keyframes spinSmooth {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Small Spinner - for buttons */
+        .spinner-small {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spinSmooth 0.8s linear infinite;
+        }
+
+        /* Medium Spinner */
+        .spinner-medium {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spinSmooth 0.8s linear infinite;
+        }
+
+        /* Large Spinner */
+        .spinner-large {
+            display: inline-block;
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.15);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spinSmooth 0.8s linear infinite;
+        }
+
+        /* Loading Overlay with enhanced styling */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease-in;
+            backdrop-filter: blur(2px);
+        }
+
+        /* Loading Spinner Container */
+        .loading-spinner {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            text-align: center;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+            min-width: 220px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .loading-spinner .spinner-large {
+            margin: 0 auto 1.25rem;
+            display: block;
+        }
+
+        .loading-spinner p {
+            margin: 0;
+            color: rgb(55, 65, 81);
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        /* Card Loading Spinner */
+        .card-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .card-loading::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: inherit;
+            z-index: 10;
+        }
+
+        .card-loading .spinner-medium {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 11;
+            border-top-color: rgb(59, 130, 246);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        /* Button Loading State */
+        button[data-loading="true"] {
+            position: relative;
+            color: transparent;
+        }
+
+        button[data-loading="true"]::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spinSmooth 0.8s linear infinite;
+        }
+
+        /* Button loading state for dark backgrounds */
+        .bg-gradient-warm button[data-loading="true"]::before {
+            border-top-color: rgba(255, 255, 255, 0.8);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Fade animations */
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        .loading-spinner.fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .loading-spinner.fade-out {
+            animation: fadeOut 0.3s ease-out;
+            animation-fill-mode: forwards;
+        }
+
+        /* Loading Text Animation */
+        .loading-text {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="bg-gradient-warm min-h-screen flex items-center justify-center py-12 px-4">
@@ -221,6 +382,14 @@
             <button id="backToLandingBtn" class="text-gray-600 hover:text-gray-800 transition-colors duration-300">
                 <i class="fas fa-arrow-left mr-2"></i>Vissza a főoldalra
             </button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="hidden loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p id="loadingMessage">Betöltés...</p>
         </div>
     </div>
 
