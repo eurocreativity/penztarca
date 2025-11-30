@@ -104,7 +104,29 @@ class FinanceApp {
                 deletingCategory: 'Kategória törlése...',
                 updatingCharts: 'Diagramok frissítése...',
                 exportingCsv: 'Exportálás folyamatban...',
-                importingCsv: 'Importálás folyamatban...'
+                importingCsv: 'Importálás folyamatban...',
+                // Toast notifications - validation errors
+                missingAmount: 'Kérlek add meg az összeget',
+                missingCategory: 'Kérlek válassz kategóriát',
+                missingDescription: 'Kérlek adj meg egy leírást',
+                missingCategoryName: 'Kérlek adj meg egy kategória nevet',
+                missingColor: 'Kérlek válassz egy színt',
+                missingIcon: 'Kérlek válassz egy ikont',
+                // Toast notifications - success messages
+                transactionSaved: 'Tranzakció sikeresen mentve',
+                categorySaved: 'Kategória sikeresen mentve',
+                budgetSaved: 'Költségvetés sikeresen frissítve',
+                // Toast notifications - other messages
+                categoryInUse: 'Ezt a kategóriát nem lehet törölni, mert használatban van',
+                selectDateError: 'Kérlek válassz dátumot',
+                noValidData: 'Nem található érvényes adat a fájlban',
+                profileCreateError: 'Hiba történt a profil létrehozása során',
+                savingError: 'Hiba mentés közben',
+                logoutError: 'Hiba történt a kijelentkezés során',
+                csvImportSuccess: 'CSV sikeresen importálva',
+                csvImportError: 'Hiba történt az importálás során',
+                csvExportSuccess: 'CSV sikeresen exportálva',
+                csvExportError: 'Hiba történt az exportálás során'
             },
             en: {
                 appTitle: 'Finance Tracker',
@@ -192,9 +214,34 @@ class FinanceApp {
                 deletingCategory: 'Deleting category...',
                 updatingCharts: 'Updating charts...',
                 exportingCsv: 'Exporting...',
-                importingCsv: 'Importing...'
+                importingCsv: 'Importing...',
+                // Toast notifications - validation errors
+                missingAmount: 'Please enter an amount',
+                missingCategory: 'Please select a category',
+                missingDescription: 'Please enter a description',
+                missingCategoryName: 'Please enter a category name',
+                missingColor: 'Please select a color',
+                missingIcon: 'Please select an icon',
+                // Toast notifications - success messages
+                transactionSaved: 'Transaction saved successfully',
+                categorySaved: 'Category saved successfully',
+                budgetSaved: 'Budget updated successfully',
+                // Toast notifications - other messages
+                categoryInUse: 'This category cannot be deleted because it is in use',
+                selectDateError: 'Please select a date',
+                noValidData: 'No valid data found in the file',
+                profileCreateError: 'Error creating profile',
+                savingError: 'Error saving data',
+                logoutError: 'An error occurred during logout',
+                csvImportSuccess: 'CSV imported successfully',
+                csvImportError: 'Error importing CSV',
+                csvExportSuccess: 'CSV exported successfully',
+                csvExportError: 'Error exporting CSV'
             }
         };
+
+        // Initialize ToastManager for notifications
+        this.toastManager = new ToastManager(this.currentLanguage);
 
         this.init();
     }
@@ -364,7 +411,7 @@ class FinanceApp {
 
                 if (createError) {
                     console.error('Error creating profile:', createError);
-                    alert(`Profil létrehozási hiba: ${createError.message}`);
+                    this.toastManager.showError(this.getText('profileCreateError'));
                     window.location.href = 'auth.html';
                     return;
                 }
@@ -907,7 +954,7 @@ class FinanceApp {
         const saveBtn = form.querySelector('button[type="submit"]');
 
         if (!name) {
-            alert('Kérlek add meg a kategória nevét!');
+            this.toastManager.showError(this.getText('missingCategoryName'));
             return;
         }
 
@@ -955,7 +1002,7 @@ class FinanceApp {
         } catch (error) {
             this.setButtonLoading(saveBtn, false);
             console.error('Error saving category:', error);
-            alert(this.getText('saveError'));
+            this.toastManager.showError(this.getText('saveError'));
         }
     }
 
@@ -971,7 +1018,7 @@ class FinanceApp {
         const isUsed = this.expenses.some(expense => expense.category == categoryId);
 
         if (isUsed) {
-            alert('Ezt a kategóriát nem lehet törölni, mert használatban van!');
+            this.toastManager.showWarning(this.getText('categoryInUse'));
             return;
         }
 
@@ -994,7 +1041,7 @@ class FinanceApp {
                 this.updateCategorySelectors();
             } catch (error) {
                 console.error('Error deleting category:', error);
-                alert(this.getText('saveError'));
+                this.toastManager.showError(this.getText('saveError'));
             }
         }
     }
@@ -1046,7 +1093,7 @@ class FinanceApp {
         const amount = parseFloat(budgetInput.value);
 
         if (isNaN(amount) || amount < 0) {
-            alert(this.getText('invalidAmount'));
+            this.toastManager.showError(this.getText('invalidAmount'));
             return;
         }
 
@@ -1070,7 +1117,7 @@ class FinanceApp {
             console.error('Error code:', error.code);
             console.error('Error message:', error.message);
             console.error('Error details:', error.details);
-            alert(`Hiba mentés közben: ${error.message || error.error_description || 'Ismeretlen hiba'}`);
+            this.toastManager.showError(this.getText('savingError'));
         }
     }
 
@@ -1090,22 +1137,22 @@ class FinanceApp {
 
         // Validation
         if (isNaN(amount) || amount <= 0) {
-            alert(this.getText('invalidAmount'));
+            this.toastManager.showError(this.getText('invalidAmount'));
             return;
         }
 
         if (!categoryId) {
-            alert(this.getText('selectCategoryError'));
+            this.toastManager.showError(this.getText('selectCategoryError'));
             return;
         }
 
         if (!description) {
-            alert(this.getText('enterDescription'));
+            this.toastManager.showError(this.getText('enterDescription'));
             return;
         }
 
         if (!date) {
-            alert('Kérlek válassz dátumot!');
+            this.toastManager.showError(this.getText('selectDateError'));
             return;
         }
 
@@ -1712,7 +1759,7 @@ class FinanceApp {
                 }
             } catch (error) {
                 console.error('Error deleting expense:', error);
-                alert(this.getText('saveError'));
+                this.toastManager.showError(this.getText('saveError'));
             }
         }
     }
@@ -1816,7 +1863,7 @@ class FinanceApp {
         if (!file) return;
 
         if (!file.name.endsWith('.json')) {
-            alert(this.getText('invalidFileFormat'));
+            this.toastManager.showError(this.getText('invalidFileFormat'));
             return;
         }
 
@@ -1826,7 +1873,7 @@ class FinanceApp {
                 const data = JSON.parse(e.target.result);
 
                 if (!data.expenses || !Array.isArray(data.expenses)) {
-                    alert(this.getText('importInvalidFormat'));
+                    this.toastManager.showError(this.getText('importInvalidFormat'));
                     return;
                 }
 
@@ -1869,11 +1916,11 @@ class FinanceApp {
                     }));
 
                     this.updateUI();
-                    alert(this.getText('importSuccess'));
+                    this.toastManager.showSuccess(this.getText('importSuccess'));
                 }
             } catch (error) {
                 console.error('Import error:', error);
-                alert(this.getText('importError'));
+                this.toastManager.showError(this.getText('importError'));
             }
         };
 
@@ -1923,7 +1970,7 @@ class FinanceApp {
         if (!file) return;
 
         if (!file.name.endsWith('.csv')) {
-            alert(this.getText('invalidFileFormat'));
+            this.toastManager.showError(this.getText('invalidFileFormat'));
             return;
         }
 
@@ -1985,15 +2032,15 @@ class FinanceApp {
 
                         this.expenses = [...this.expenses, ...mappedExpenses];
                         this.updateUI();
-                        alert(this.getText('importSuccess'));
+                        this.toastManager.showSuccess(this.getText('importSuccess'));
                     }
                 } else {
-                    alert('Nem található érvényes adat a CSV fájlban.');
+                    this.toastManager.showWarning(this.getText('noValidData'));
                 }
 
             } catch (error) {
                 console.error('CSV Import error:', error);
-                alert(this.getText('importError'));
+                this.toastManager.showError(this.getText('importError'));
             }
         };
 
@@ -2023,6 +2070,11 @@ class FinanceApp {
             }
         });
 
+        // Update ToastManager language
+        if (this.toastManager) {
+            this.toastManager.setLanguage(this.currentLanguage);
+        }
+
         this.updateCategorySelectors();
         this.updateFilterCategoryOptions();
         this.updateCharts(); // Refresh charts with new language
@@ -2030,6 +2082,42 @@ class FinanceApp {
 
     getText(key) {
         return this.languages[this.currentLanguage]?.[key] || key;
+    }
+
+    /**
+     * Helper method for displaying toast notifications
+     * Provides easy access to ToastManager from anywhere in FinanceApp
+     */
+    toast(message, type = 'info', duration) {
+        return this.toastManager.showToast(message, type, duration);
+    }
+
+    /**
+     * Show success toast
+     */
+    showSuccess(message, duration = 3000) {
+        return this.toastManager.showSuccess(message, duration);
+    }
+
+    /**
+     * Show error toast
+     */
+    showError(message, duration = 5000) {
+        return this.toastManager.showError(message, duration);
+    }
+
+    /**
+     * Show warning toast
+     */
+    showWarning(message, duration = 4000) {
+        return this.toastManager.showWarning(message, duration);
+    }
+
+    /**
+     * Show info toast
+     */
+    showInfo(message, duration = 3000) {
+        return this.toastManager.showInfo(message, duration);
     }
 
     setupDarkMode() {
@@ -2409,6 +2497,249 @@ class FinanceApp {
     };
 }
 
+
+/**
+ * ToastManager - Notification system for user feedback
+ * Replaces alert() calls with non-blocking toast notifications
+ * Supports success, error, warning, and info message types
+ * Manages queue of up to 3 visible toasts with auto-dismiss
+ */
+class ToastManager {
+    constructor(language = 'hu') {
+        this.toasts = [];
+        this.maxVisible = 3;
+        this.language = language;
+        this.container = null;
+        this.timeouts = new Map();
+        this.init();
+    }
+
+    /**
+     * Initialize toast container in DOM
+     * Creates the container element if it doesn't exist
+     */
+    init() {
+        let container = document.getElementById('toastContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+        this.container = container;
+    }
+
+    /**
+     * Display a toast notification
+     * @param {string} message - The message to display
+     * @param {string} type - Type of toast: 'success', 'error', 'warning', 'info'
+     * @param {number} duration - Auto-dismiss time in milliseconds (0 = no auto-dismiss)
+     * @returns {string} Toast ID for later reference
+     */
+    showToast(message, type = 'info', duration = 3000) {
+        // Generate unique ID for this toast
+        const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+        const toast = {
+            id,
+            message,
+            type,
+            duration,
+            element: null
+        };
+
+        this.toasts.push(toast);
+        this.renderToast(toast);
+
+        // Set up auto-dismiss
+        if (duration > 0) {
+            const timeoutId = setTimeout(() => this.dismissToast(id), duration);
+            this.timeouts.set(id, timeoutId);
+        }
+
+        return id;
+    }
+
+    /**
+     * Show success toast
+     * @param {string} message - Success message
+     * @param {number} duration - Auto-dismiss time (default 3000ms)
+     */
+    showSuccess(message, duration = 3000) {
+        return this.showToast(message, 'success', duration);
+    }
+
+    /**
+     * Show error toast
+     * @param {string} message - Error message
+     * @param {number} duration - Auto-dismiss time (default 5000ms for reading)
+     */
+    showError(message, duration = 5000) {
+        return this.showToast(message, 'error', duration);
+    }
+
+    /**
+     * Show warning toast
+     * @param {string} message - Warning message
+     * @param {number} duration - Auto-dismiss time (default 4000ms)
+     */
+    showWarning(message, duration = 4000) {
+        return this.showToast(message, 'warning', duration);
+    }
+
+    /**
+     * Show info toast
+     * @param {string} message - Info message
+     * @param {number} duration - Auto-dismiss time (default 3000ms)
+     */
+    showInfo(message, duration = 3000) {
+        return this.showToast(message, 'info', duration);
+    }
+
+    /**
+     * Render a toast to the DOM
+     * Implements queue management (max 3 visible)
+     */
+    renderToast(toast) {
+        // Check queue - only render if visible count < max
+        const visibleCount = this.container.querySelectorAll('.toast:not(.toast-slide-out)').length;
+        if (visibleCount >= this.maxVisible) {
+            // Toast will be rendered when another one dismisses
+            return;
+        }
+
+        const toastEl = this.createToastElement(toast);
+        toast.element = toastEl;
+        this.container.appendChild(toastEl);
+
+        // Trigger slide-in animation
+        requestAnimationFrame(() => {
+            toastEl.classList.add('toast-slide-in');
+        });
+    }
+
+    /**
+     * Create DOM element for a toast
+     */
+    createToastElement(toast) {
+        const div = document.createElement('div');
+        div.id = toast.id;
+        div.className = `toast toast-${toast.type}`;
+        div.setAttribute('role', 'alert');
+        div.setAttribute('aria-live', 'polite');
+        div.setAttribute('data-toast-id', toast.id);
+
+        // Icon mapping for different toast types
+        const icons = {
+            success: '✓',
+            error: '✕',
+            warning: '⚠',
+            info: 'ℹ'
+        };
+
+        div.innerHTML = `
+            <div class="toast-icon">
+                ${icons[toast.type]}
+            </div>
+            <div class="toast-content">
+                <p class="toast-message">${this.escapeHtml(toast.message)}</p>
+            </div>
+            <button class="toast-close" aria-label="Close notification">
+                <span>✕</span>
+            </button>
+        `;
+
+        // Close button handler
+        const closeBtn = div.querySelector('.toast-close');
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.dismissToast(toast.id);
+        });
+
+        // Click anywhere on toast to dismiss
+        div.addEventListener('click', () => {
+            this.dismissToast(toast.id);
+        });
+
+        return div;
+    }
+
+    /**
+     * Dismiss a specific toast
+     */
+    dismissToast(toastId) {
+        const toast = this.toasts.find(t => t.id === toastId);
+        if (!toast || !toast.element) return;
+
+        // Clear auto-dismiss timeout if exists
+        if (this.timeouts.has(toastId)) {
+            clearTimeout(this.timeouts.get(toastId));
+            this.timeouts.delete(toastId);
+        }
+
+        // Add slide-out animation
+        toast.element.classList.remove('toast-slide-in');
+        toast.element.classList.add('toast-slide-out');
+
+        // Remove from DOM after animation completes
+        setTimeout(() => {
+            if (toast.element && toast.element.parentNode) {
+                toast.element.remove();
+            }
+            this.toasts = this.toasts.filter(t => t.id !== toastId);
+
+            // Process queue - show next queued toast if any
+            this.processQueue();
+        }, 250);
+    }
+
+    /**
+     * Process waiting toasts in queue
+     * Shows next queued toast if visible count is below max
+     */
+    processQueue() {
+        const visibleCount = this.container.querySelectorAll('.toast:not(.toast-slide-out)').length;
+
+        // Find first toast without a rendered element (queued)
+        const queuedToast = this.toasts.find(t => !t.element);
+
+        if (queuedToast && visibleCount < this.maxVisible) {
+            this.renderToast(queuedToast);
+        }
+    }
+
+    /**
+     * Clear all active toasts
+     */
+    clearAll() {
+        this.toasts.forEach(toast => {
+            if (this.timeouts.has(toast.id)) {
+                clearTimeout(this.timeouts.get(toast.id));
+                this.timeouts.delete(toast.id);
+            }
+            if (toast.element && toast.element.parentNode) {
+                toast.element.remove();
+            }
+        });
+        this.toasts = [];
+    }
+
+    /**
+     * Escape HTML entities in message to prevent XSS
+     */
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
+     * Update language setting
+     */
+    setLanguage(language) {
+        this.language = language;
+    }
+}
 
 
 // Set today's date as default

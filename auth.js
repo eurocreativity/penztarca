@@ -1,6 +1,10 @@
 class AuthManager {
     constructor() {
         console.log('AuthManager constructor called');
+
+        // Initialize ToastManager for notifications
+        this.toastManager = new ToastManager();
+
         if (window.supabaseClient) {
             console.log('Supabase client already available, initializing...');
             this.init();
@@ -710,7 +714,12 @@ class AuthManager {
             console.error('Error during logout:', error);
             const overlay = document.getElementById('loadingOverlay');
             if (overlay) overlay.classList.add('hidden');
-            alert('Hiba történt a kijelentkezés során. Kérlek, próbáld újra.');
+            // Use toastManager if available, otherwise fallback to alert
+            if (window.app && window.app.toastManager) {
+                window.app.toastManager.showError(window.app.getText('logoutError'));
+            } else {
+                alert('Hiba történt a kijelentkezés során. Kérlek, próbáld újra.');
+            }
             throw error;
         }
     }
@@ -766,6 +775,42 @@ class AuthManager {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Helper method for displaying toast notifications
+     * Provides easy access to ToastManager from anywhere in AuthManager
+     */
+    toast(message, type = 'info', duration) {
+        return this.toastManager.showToast(message, type, duration);
+    }
+
+    /**
+     * Show success toast
+     */
+    showSuccess(message, duration = 3000) {
+        return this.toastManager.showSuccess(message, duration);
+    }
+
+    /**
+     * Show error toast
+     */
+    showError(message, duration = 5000) {
+        return this.toastManager.showError(message, duration);
+    }
+
+    /**
+     * Show warning toast
+     */
+    showWarning(message, duration = 4000) {
+        return this.toastManager.showWarning(message, duration);
+    }
+
+    /**
+     * Show info toast
+     */
+    showInfo(message, duration = 3000) {
+        return this.toastManager.showInfo(message, duration);
     }
 }
 
