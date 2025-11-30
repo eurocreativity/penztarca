@@ -1543,7 +1543,7 @@ class FinanceApp {
 
         // Sort and limit to recent items
         const recentExpenses = filteredExpenses
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
             .slice(0, 10); // Show 10 instead of 5 when filtering
 
         if (recentExpenses.length === 0) {
