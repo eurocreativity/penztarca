@@ -850,6 +850,57 @@ class FinanceApp {
                 this.clearAllFilters();
             });
         }
+
+        // Recurring transactions button
+        const addRecurringBtn = document.getElementById('addRecurringBtn');
+        if (addRecurringBtn) {
+            addRecurringBtn.addEventListener('click', () => {
+                this.recurringManager?.showRecurringForm();
+            });
+        }
+
+        // Recurring form submit
+        const recurringForm = document.getElementById('recurringForm');
+        if (recurringForm) {
+            recurringForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.handleRecurringSubmit(e);
+            });
+        }
+
+        // Close recurring form button
+        const closeRecurringForm = document.getElementById('closeRecurringForm');
+        if (closeRecurringForm) {
+            closeRecurringForm.addEventListener('click', () => {
+                const formCard = document.getElementById('recurringFormCard');
+                if (formCard) {
+                    formCard.classList.add('hidden');
+                }
+            });
+        }
+
+        // Cancel recurring button
+        const cancelRecurringBtn = document.getElementById('cancelRecurringBtn');
+        if (cancelRecurringBtn) {
+            cancelRecurringBtn.addEventListener('click', () => {
+                const formCard = document.getElementById('recurringFormCard');
+                if (formCard) {
+                    formCard.classList.add('hidden');
+                }
+                this.recurringManager?.clearForm();
+            });
+        }
+
+        // Recurring type change listener
+        const recurringTypeRadios = document.getElementsByName('recurringType');
+        if (recurringTypeRadios.length > 0) {
+            recurringTypeRadios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    this.populateRecurringCategories(e.target.value);
+                });
+            });
+        }
+
         } catch (error) {
             console.error("Error in setupEventListeners:", error);
             console.error("This is usually caused by missing DOM elements. The app will continue to work.");
@@ -3340,6 +3391,54 @@ class RecurringManager {
         if (confirm(this.app.getText('deleteRecurringConfirm'))) {
             this.deleteRecurring(id);
         }
+    }
+
+    /**
+     * Show recurring transaction form
+     */
+    showRecurringForm(recurring = null) {
+        const formCard = document.getElementById('recurringFormCard');
+        if (!formCard) return;
+
+        // Clear form first
+        this.clearForm();
+
+        // If editing existing recurring
+        if (recurring) {
+            document.getElementById('recurringId').value = recurring.id;
+            document.getElementById('recurringAmount').value = recurring.amount;
+            document.getElementById('recurringCategory').value = recurring.category_id;
+            document.getElementById('recurringDescription').value = recurring.description;
+            document.getElementById('recurringFrequency').value = recurring.frequency;
+            document.getElementById('recurringStartDate').value = recurring.start_date;
+            document.getElementById('recurringEndDate').value = recurring.end_date || '';
+
+            // Set transaction type
+            const typeRadio = document.querySelector(`input[name="recurringType"][value="${recurring.type}"]`);
+            if (typeRadio) {
+                typeRadio.checked = true;
+                this.app.populateRecurringCategories(recurring.type);
+            }
+        } else {
+            // New recurring - set defaults
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('recurringStartDate').value = today;
+
+            // Set default type to expense
+            const expenseRadio = document.querySelector('input[name="recurringType"][value="expense"]');
+            if (expenseRadio) {
+                expenseRadio.checked = true;
+                this.app.populateRecurringCategories('expense');
+            }
+        }
+
+        // Show form
+        formCard.classList.remove('hidden');
+
+        // Focus on amount input
+        setTimeout(() => {
+            document.getElementById('recurringAmount')?.focus();
+        }, 100);
     }
 
     /**
