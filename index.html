@@ -151,9 +151,9 @@
             max-width: 100%;
         }
 
-        /* Centered layout with padding on sides */
+        /* Centered layout with padding on sides - max-width controlled by Tailwind classes */
         main {
-            max-width: 1024px;
+            max-width: 100%;
         }
 
         /* Ensure widgets don't get too wide */
@@ -309,7 +309,7 @@
     <!-- Header -->
     <header
         class="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm border-b border-gray-200 dark:border-slate-700">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3">
+        <div class="w-4/5 mx-auto px-3 sm:px-6 lg:px-8 py-3">
             <div class="flex justify-between items-center">
                 <h1
                     class="text-2xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
@@ -332,7 +332,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-5 pb-20 lg:pb-8">
+    <main class="w-4/5 mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-5 pb-20 lg:pb-8">
         <!-- Budget Overview - Optimized -->
         <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg border border-amber-100 dark:border-amber-900/30 p-4 sm:p-5">
             <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -371,7 +371,7 @@
                         class="bg-gradient-to-r from-amber-500 to-orange-600 h-3 rounded-full transition-all duration-500 relative"
                         style="width: 0%"
                     >
-                        <div class="absolute inset-0 bg-white/20 animate-pulse-soft"></div>
+                        <div class="absolute inset-0 bg-white/20 animate-pulse-soft pointer-events-none"></div>
                     </div>
                 </div>
                 <div class="flex justify-between text-xs sm:text-sm">
@@ -384,7 +384,7 @@
         </div>
 
         <!-- Quick Stats - Modernized -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <!-- Today's Expenses -->
                 <div class="stat-card stat-card-expense">
                     <div class="stat-header">
@@ -429,8 +429,8 @@
                     <p id="monthlyIncome" class="stat-value stat-value-income">0 Ft</p>
                 </div>
 
-                <!-- Net Balance - Spans 2 columns -->
-                <div class="stat-card stat-card-balance sm:col-span-2">
+                <!-- Net Balance - Spans full width on mobile, 2 cols on larger screens -->
+                <div class="stat-card stat-card-balance sm:col-span-2 lg:col-span-3">
                     <div class="stat-header">
                         <div class="stat-icon stat-icon-balance">
                             <i class="fas fa-balance-scale"></i>
@@ -440,7 +440,6 @@
                     <p id="netBalance" class="stat-value stat-value-balance text-3xl sm:text-4xl">0 Ft</p>
                 </div>
             </div>
-        </div>
 
         <!-- Transaction Form - Modernized & Compact -->
         <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 p-4 sm:p-5">
