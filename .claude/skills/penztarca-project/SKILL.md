@@ -351,8 +351,43 @@ this.showLoadingOverlay('Mentés...', 300);
 - Zero external dependencies
 
 ### Documentation Files
-- `LOADING_STATES_PLAN.md` - Implementation plan
-- `SPINNER_QUICK_REFERENCE.md` - Developer guide
-- `SPINNER_COMPONENT_SUMMARY.md` - Executive summary
-- `LOADING_STATES_IMPLEMENTATION.md` - Technical spec
-- `TEST_RESULTS.md` - Test report (89 tests, 100% pass)
+- `docs/LOADING_STATES_IMPLEMENTATION.md` - Technical spec
+- `docs/SPINNER_QUICK_REFERENCE.md` - Developer guide
+- `docs/SPINNER_COMPONENT_SUMMARY.md` - Executive summary
+- `docs/TEST_RESULTS.md` - Test report (89 tests, 100% pass)
+- `docs/SUPABASE_REDIRECT_URL_FIX.md` - Email verification fix
+
+---
+
+## 🤖 Available Agents (.claude/agents/)
+
+### Coordinator Agent
+**File:** `.claude/agents/coordinator.md`
+**Purpose:** Orchestrates multi-agent tasks, plans complex features, manages parallel execution
+**Use When:** Complex tasks requiring multiple specialists, parallel development, feature planning
+**Strengths:** Task decomposition, agent coordination, integration management
+
+### Frontend Developer
+**File:** `.claude/agents/frontend-developer.md`
+**Purpose:** UI implementation, JavaScript features, DOM manipulation
+**Strengths:** Vanilla JS, Tailwind CSS, browser APIs, responsive design
+
+### Backend Developer
+**File:** `.claude/agents/backend-developer.md`
+**Purpose:** Supabase integration, database operations, RLS policies
+**Strengths:** SQL, async operations, data validation, error handling
+
+### QA Tester
+**File:** `.claude/agents/qa-tester.md`
+**Purpose:** Testing, validation, quality assurance
+**Strengths:** Test planning, edge cases, user flows, bug reports
+
+### UI Designer
+**File:** `.claude/agents/ui-designer.md`
+**Purpose:** Visual design, UX improvements, design systems
+**Strengths:** Aesthetics, color theory, accessibility, layout
+
+### DevOps
+**File:** `.claude/agents/devops.md`
+**Purpose:** Deployment, CI/CD, environment configuration
+**Strengths:** Netlify, git workflows, build processes
