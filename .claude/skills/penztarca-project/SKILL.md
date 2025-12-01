@@ -262,7 +262,25 @@ http://localhost:8000/index.html    # App (auth required)
 - Email Verification: ✅ Fixed (2025-11-30) - Supabase redirect URLs configured
 - **Loading States: ✅ IMPLEMENTED (2025-11-30)** - Complete loading indicators
 
-**Latest Changes (2025-11-30):**
+**Latest Changes (2025-12-01):**
+- ✅ **TRANSLATION SYSTEM COMPLETE**
+  - Added missing translation keys (addRecurring, expenseOnlyTodayError)
+  - Implemented dynamic category translation system with getCategoryName()
+  - All categories now translate correctly (HU ↔ EN)
+  - Form button text changes based on transaction type
+  - "Kiadás Hozzáadása" / "Add Expense" for expenses
+  - "Bevétel Hozzáadása" / "Add Income" for income
+- ✅ **BUG FIXES & IMPROVEMENTS**
+  - Fixed ToastManager initialization in auth.js (optional chaining)
+  - Fixed setupEventListeners with optional chaining for all DOM elements
+  - Added event listeners for transaction type radio buttons
+  - Fixed recurring transactions button functionality
+- ✅ **DATE VALIDATION FEATURE**
+  - Expenses can only be added for today's date
+  - Income can be added for future dates (planned salary payments)
+  - Tested and working in both languages
+
+**Previous Changes (2025-11-30):**
 - ✅ **LOADING STATES IMPLEMENTATION COMPLETE**
   - 240+ lines of CSS spinner animations (light/dark mode)
   - 12 helper functions for loading management
@@ -285,14 +303,16 @@ http://localhost:8000/index.html    # App (auth required)
 **Next Priorities:**
 1. ~~Configure Supabase redirect URLs~~ ✅ DONE
 2. ~~Loading states~~ ✅ DONE
-3. Error toast notifications (NEXT)
-4. Recurring transactions
-5. Budget per category
+3. ~~Complete translation system~~ ✅ DONE
+4. ~~Date validation for expenses~~ ✅ DONE
+5. Recurring transactions (NEXT)
+6. Error toast notifications
+7. Budget per category
 
 ---
 
-**Last Updated:** 2025-11-30
-**Project Version:** 1.3 - Loading States Implementation (MAJOR FEATURE)
+**Last Updated:** 2025-12-01
+**Project Version:** 1.4 - Complete i18n & Date Validation
 **Current Branch:** develop
 **Framework:** Vanilla JS + Supabase + Netlify
 **Production URL:** https://penztarca.netlify.app
