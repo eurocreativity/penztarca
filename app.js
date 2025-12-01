@@ -401,6 +401,18 @@ class FinanceApp {
 
             this.showLoadingOverlay(this.getText("loadingApp"));
 
+            // Check if user just logged in
+            const urlParams = new URLSearchParams(window.location.search);
+            const justLoggedIn = urlParams.get('just_logged_in') === 'true';
+
+            if (justLoggedIn) {
+                console.log('🔑 Just logged in, waiting extra time for session persistence...');
+                // Wait a bit longer for session to fully persist
+                await new Promise(resolve => setTimeout(resolve, 800));
+                // Clear the URL parameter
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
             // FIRST: Immediately check for existing session
             console.log('Step 1: Checking for immediate session...');
             let sessionResult = await window.supabaseClient.auth.getSession();
@@ -423,7 +435,7 @@ class FinanceApp {
                             resolved = true;
                             resolve(data.session);
                         }
-                    }, 5000);
+                    }, justLoggedIn ? 8000 : 5000);
 
                     // Listen for auth state changes
                     const { data: { subscription } } = window.supabaseClient.auth.onAuthStateChange((event, authSession) => {

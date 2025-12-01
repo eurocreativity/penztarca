@@ -548,8 +548,8 @@ class AuthManager {
                 console.log('✅ Session verified, redirecting to index.html');
                 this.showLoadingOverlay('Átirányítás...');
                 setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 500);
+                    window.location.href = 'index.html?just_logged_in=true';
+                }, 1500);
             } else {
                 console.error('❌ Session not found after login and retries');
                 this.hideLoadingOverlay();
