@@ -120,6 +120,7 @@ class FinanceApp {
                 // Toast notifications - other messages
                 categoryInUse: 'Ezt a kategóriát nem lehet törölni, mert használatban van',
                 selectDateError: 'Kérlek válassz dátumot',
+                expenseOnlyTodayError: 'Kiadásokat csak a mai napra lehet rögzíteni!',
                 noValidData: 'Nem található érvényes adat a fájlban',
                 profileCreateError: 'Hiba történt a profil létrehozása során',
                 savingError: 'Hiba mentés közben',
@@ -128,8 +129,19 @@ class FinanceApp {
                 csvImportError: 'Hiba történt az importálás során',
                 csvExportSuccess: 'CSV sikeresen exportálva',
                 csvExportError: 'Hiba történt az exportálás során',
+                // Category Names
+                catFood: 'Élelmiszer',
+                catTransport: 'Közlekedés',
+                catEntertainment: 'Szórakozás',
+                catBills: 'Számlák',
+                catOther: 'Egyéb',
+                catSalary: 'Fizetés',
+                catBonus: 'Prémium',
+                catFreelance: 'Megbízás',
+                catOtherIncome: 'Egyéb bevétel',
                 // Recurring Transactions - Section Labels
                 recurringTransactions: 'Ismétlődő Tranzakciók',
+                addRecurring: 'Új ismétlődő',
                 newRecurring: 'Új Ismétlődő',
                 activeRecurring: 'Aktív',
                 pausedRecurring: 'Szüneteltetett',
@@ -267,6 +279,7 @@ class FinanceApp {
                 // Toast notifications - other messages
                 categoryInUse: 'This category cannot be deleted because it is in use',
                 selectDateError: 'Please select a date',
+                expenseOnlyTodayError: 'Expenses can only be recorded for today!',
                 noValidData: 'No valid data found in the file',
                 profileCreateError: 'Error creating profile',
                 savingError: 'Error saving data',
@@ -275,8 +288,19 @@ class FinanceApp {
                 csvImportError: 'Error importing CSV',
                 csvExportSuccess: 'CSV exported successfully',
                 csvExportError: 'Error exporting CSV',
+                // Category Names
+                catFood: 'Food',
+                catTransport: 'Transport',
+                catEntertainment: 'Entertainment',
+                catBills: 'Bills',
+                catOther: 'Other',
+                catSalary: 'Salary',
+                catBonus: 'Bonus',
+                catFreelance: 'Freelance',
+                catOtherIncome: 'Other Income',
                 // Recurring Transactions - Section Labels
                 recurringTransactions: 'Recurring Transactions',
+                addRecurring: 'New Recurring',
                 newRecurring: 'New Recurring',
                 activeRecurring: 'Active',
                 pausedRecurring: 'Paused',
@@ -732,7 +756,7 @@ class FinanceApp {
     getDefaultCategories() {
         return [
             // Expense categories
-            { id: 'food', name: 'Élelmiszer', color: '#f59e0b', icon: 'fas fa-utensils', type: 'expense' },
+            { id: 'food', name: this.getText('catFood'), color: '#f59e0b', icon: 'fas fa-utensils', type: 'expense' },
             { id: 'transport', name: 'Közlekedés', color: '#3b82f6', icon: 'fas fa-car', type: 'expense' },
             { id: 'entertainment', name: 'Szórakozás', color: '#8b5cf6', icon: 'fas fa-gamepad', type: 'expense' },
             { id: 'bills', name: 'Számlák', color: '#ef4444', icon: 'fas fa-file-invoice', type: 'expense' },
@@ -748,12 +772,12 @@ class FinanceApp {
     setupEventListeners() {
         try {
         // Budget form
-        document.getElementById('setBudgetBtn').addEventListener('click', async () => {
+        document.getElementById('setBudgetBtn')?.addEventListener('click', async () => {
             await this.setBudget();
         });
 
         // Expense form
-        document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+        document.getElementById('expenseForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitButton = e.target.querySelector('button[type="submit"]');
             if (submitButton) submitButton.disabled = true;
@@ -768,36 +792,36 @@ class FinanceApp {
         this.setupTransactionTypeListener();
 
         // Language selector
-        document.getElementById('languageSelector').addEventListener('change', async (e) => {
+        document.getElementById('languageSelector')?.addEventListener('change', async (e) => {
             this.currentLanguage = e.target.value;
             await this.saveLanguage();
             this.updateLanguage();
         });
 
         // Dark mode toggle
-        document.getElementById('darkModeToggle').addEventListener('click', () => {
+        document.getElementById('darkModeToggle')?.addEventListener('click', () => {
             this.toggleDarkMode();
         });
 
         // Export/Import
-        document.getElementById('exportBtn').addEventListener('click', () => {
+        document.getElementById('exportBtn')?.addEventListener('click', () => {
             this.exportData();
         });
 
-        document.getElementById('importBtn').addEventListener('change', (e) => {
+        document.getElementById('importBtn')?.addEventListener('change', (e) => {
             this.importData(e);
         });
 
-        document.getElementById('exportCsvBtn').addEventListener('click', () => {
+        document.getElementById('exportCsvBtn')?.addEventListener('click', () => {
             this.exportToCSV();
         });
 
-        document.getElementById('importCsvBtn').addEventListener('change', (e) => {
+        document.getElementById('importCsvBtn')?.addEventListener('change', (e) => {
             this.importFromCSV(e);
         });
 
         // Show all expenses
-        document.getElementById('showAllExpenses').addEventListener('click', () => {
+        document.getElementById('showAllExpenses')?.addEventListener('click', () => {
             this.showAllExpensesModal();
         });
 
@@ -871,6 +895,7 @@ class FinanceApp {
             });
         }
 
+        // Transaction type radio button handlers        const typeRadios = document.querySelectorAll('input[name="transactionType"]');        typeRadios.forEach(radio => {            radio.addEventListener('change', (e) => {                const type = e.target.value;                this.filterCategoriesByType(type);                this.updateFormButtonText(type);            });        });
         // Recurring form submit
         const recurringForm = document.getElementById('recurringForm');
         if (recurringForm) {
@@ -1225,7 +1250,7 @@ class FinanceApp {
             this.categories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category.id;
-                option.textContent = category.name;
+                option.textContent = this.getCategoryName(category);
                 filterCategory.appendChild(option);
             });
 
@@ -1304,6 +1329,18 @@ class FinanceApp {
         if (!date) {
             this.toastManager.showError(this.getText('selectDateError'));
             return;
+        }
+
+        // Validate: Expenses can only be added for today's date
+        if (type === 'expense') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayStr = today.toISOString().split('T')[0];
+
+            if (date !== todayStr) {
+                this.toastManager.showError(this.getText('expenseOnlyTodayError') || 'Kiadásokat csak a mai napra lehet rögzíteni!');
+                return;
+            }
         }
 
         this.setButtonLoading(saveBtn, true);
@@ -2234,6 +2271,35 @@ class FinanceApp {
         return this.languages[this.currentLanguage]?.[key] || key;
     }
 
+
+    getCategoryName(category) {
+        // Map category names to translation keys
+        const categoryNameMap = {
+            'Élelmiszer': 'catFood',
+            'Food': 'catFood',
+            'Közlekedés': 'catTransport',
+            'Transport': 'catTransport',
+            'Szórakozás': 'catEntertainment',
+            'Entertainment': 'catEntertainment',
+            'Számlák': 'catBills',
+            'Bills': 'catBills',
+            'Egyéb': 'catOther',
+            'Other': 'catOther',
+            'Fizetés': 'catSalary',
+            'Salary': 'catSalary',
+            'Prémium': 'catBonus',
+            'Bonus': 'catBonus',
+            'Megbízás': 'catFreelance',
+            'Freelance': 'catFreelance',
+            'Egyéb bevétel': 'catOtherIncome',
+            'Other Income': 'catOtherIncome'
+        };
+
+        const categoryName = typeof category === 'string' ? category : category.name;
+        const translationKey = categoryNameMap[categoryName];
+        return translationKey ? this.getText(translationKey) : categoryName;
+
+    }
     /**
      * Helper method for displaying toast notifications
      * Provides easy access to ToastManager from anywhere in FinanceApp
@@ -2309,6 +2375,7 @@ class FinanceApp {
     }
 
     // Filter category dropdown based on transaction type
+    updateFormButtonText(type) {        const button = document.getElementById('saveExpenseBtn');        if (!button) return;        const span = button.querySelector('[data-lang]');        if (span) {            const textKey = type === 'income' ? 'addIncome' : 'addExpense';            span.textContent = this.getText(textKey);        }    }
     filterCategoriesByType(type) {
         const select = document.getElementById('expenseCategory');
         if (!select) return;
@@ -2322,7 +2389,7 @@ class FinanceApp {
         filteredCategories.forEach(cat => {
             const option = document.createElement('option');
             option.value = cat.id;
-            option.textContent = cat.name;
+            option.textContent = this.getCategoryName(cat);
             select.appendChild(option);
         });
     }
@@ -2342,7 +2409,7 @@ class FinanceApp {
         filteredCategories.forEach(category => {
             const option = document.createElement('option');
             option.value = category.id;
-            option.textContent = category.name;
+            option.textContent = this.getCategoryName(category);
             select.appendChild(option);
         });
     }
@@ -2476,7 +2543,7 @@ class FinanceApp {
         filteredCategories.forEach(cat => {
             const option = document.createElement('option');
             option.value = cat.id;
-            option.textContent = cat.name;
+            option.textContent = this.getCategoryName(cat);
             select.appendChild(option);
         });
 

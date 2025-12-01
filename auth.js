@@ -3,7 +3,7 @@ class AuthManager {
         console.log('AuthManager constructor called');
 
         // Initialize ToastManager for notifications
-        this.toastManager = new ToastManager();
+        this.toastManager = typeof ToastManager !== 'undefined' ? new ToastManager() : null;
 
         if (window.supabaseClient) {
             console.log('Supabase client already available, initializing...');
@@ -782,35 +782,50 @@ class AuthManager {
      * Provides easy access to ToastManager from anywhere in AuthManager
      */
     toast(message, type = 'info', duration) {
-        return this.toastManager.showToast(message, type, duration);
+        if (this.toastManager) {
+            return this.toastManager.showToast(message, type, duration);
+        }
+        console.log(`[Toast ${type}]:`, message);
     }
 
     /**
      * Show success toast
      */
     showSuccess(message, duration = 3000) {
-        return this.toastManager.showSuccess(message, duration);
+        if (this.toastManager) {
+            return this.toastManager.showSuccess(message, duration);
+        }
+        console.log('[Toast success]:', message);
     }
 
     /**
      * Show error toast
      */
     showError(message, duration = 5000) {
-        return this.toastManager.showError(message, duration);
+        if (this.toastManager) {
+            return this.toastManager.showError(message, duration);
+        }
+        console.error('[Toast error]:', message);
     }
 
     /**
      * Show warning toast
      */
     showWarning(message, duration = 4000) {
-        return this.toastManager.showWarning(message, duration);
+        if (this.toastManager) {
+            return this.toastManager.showWarning(message, duration);
+        }
+        console.warn('[Toast warning]:', message);
     }
 
     /**
      * Show info toast
      */
     showInfo(message, duration = 3000) {
-        return this.toastManager.showInfo(message, duration);
+        if (this.toastManager) {
+            return this.toastManager.showInfo(message, duration);
+        }
+        console.info('[Toast info]:', message);
     }
 }
 
